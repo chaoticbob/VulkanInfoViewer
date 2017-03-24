@@ -28,6 +28,8 @@ private slots:
 
   void on_limitsFilter_textChanged(const QString &arg1);
 
+  void on_formatFilter_textChanged(const QString &arg1);
+
 private:
   void  createVulkanInstance();
   void  destroyVulkanInstance();
@@ -47,6 +49,7 @@ private:
   void  populateLimits(VkPhysicalDevice gpu);
   void  populateSurface(VkPhysicalDevice gpu);
   void  populateQueues(VkPhysicalDevice gpu);
+  void  populateFormats(VkPhysicalDevice gpu);
 
 private:
   Ui::MainWindow *ui;

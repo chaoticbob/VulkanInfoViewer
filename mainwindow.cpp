@@ -443,6 +443,34 @@ void MainWindow::populateQueues(VkPhysicalDevice gpu)
   }
 }
 
+void MainWindow::populateFormats(VkPhysicalDevice gpu)
+{
+  QTreeWidget* tw = findChild<QTreeWidget*>("formatsWidget");
+  Q_ASSERT(tw);
+  tw->clear();
+
+  uint32_t start = static_cast<uint32_t>(VK_FORMAT_BEGIN_RANGE) + 1;
+  uint32_t end = static_cast<uint32_t>(VK_FORMAT_END_RANGE);
+  for (uint32_t i = start; i <= end; ++i) {
+    VkFormat format = static_cast<VkFormat>(i);
+    VkFormatProperties properties = {};
+    vkGetPhysicalDeviceFormatProperties(gpu, format, &properties);
+
+    QTreeWidgetItem* item = new QTreeWidgetItem();
+    item->setText(0, toStringVkFormat(format));
+    item->setText(1, (properties.linearTilingFeatures != 0) ? "Y" : " ");
+    item->setText(2, (properties.optimalTilingFeatures != 0) ? "Y" : " ");
+    item->setText(3, (properties.bufferFeatures != 0) ? "Y" : " ");
+    for (int c = 1; c < item->columnCount(); ++c) {
+      item->setTextAlignment(c, Qt::AlignHCenter);
+    }
+    tw->addTopLevelItem(item);
+  }
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+}
+
 void MainWindow::on_gpus_currentIndexChanged(int index)
 {
   if (static_cast<size_t>(index) >= mVkGpus.size()) {
@@ -453,11 +481,33 @@ void MainWindow::on_gpus_currentIndexChanged(int index)
   populateLimits(gpu);
   populateSurface(gpu);
   populateQueues(gpu);
+  populateFormats(gpu);
 }
 
 void MainWindow::on_limitsFilter_textChanged(const QString &arg1)
 {
   QTreeWidget* tw = findChild<QTreeWidget*>("limitsWidget");
+  Q_ASSERT(tw);
+
+  QString filterText = arg1;
+  if (! filterText.isEmpty()) {
+    for (int i = 0; i < tw->topLevelItemCount(); ++i) {
+      auto item = tw->topLevelItem(i);
+      auto text = item->text(0);
+      bool visible = text.contains(filterText, Qt::CaseInsensitive);
+      item->setHidden(! visible);
+    }
+  }
+  else {
+    for (int i = 0; i < tw->topLevelItemCount(); ++i) {
+      tw->topLevelItem(i)->setHidden(false);
+    }
+  }
+}
+
+void MainWindow::on_formatFilter_textChanged(const QString &arg1)
+{
+  QTreeWidget* tw = findChild<QTreeWidget*>("formatsWidget");
   Q_ASSERT(tw);
 
   QString filterText = arg1;
