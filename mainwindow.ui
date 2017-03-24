@@ -75,6 +75,9 @@
                 <pointsize>10</pointsize>
                </font>
               </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
               <column>
                <property name="text">
                 <string>Layer Name</string>
@@ -117,6 +120,9 @@
                <font>
                 <pointsize>10</pointsize>
                </font>
+              </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
               </property>
               <column>
                <property name="text">
@@ -184,6 +190,9 @@
                   <pointsize>10</pointsize>
                  </font>
                 </property>
+                <property name="alternatingRowColors">
+                 <bool>true</bool>
+                </property>
                 <column>
                  <property name="text">
                   <string>Property</string>
@@ -204,11 +213,11 @@
         </widget>
         <widget class="QWidget" name="tab_3">
          <attribute name="title">
-          <string>Surface Capabilities</string>
+          <string>Surface</string>
          </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_14">
+         <layout class="QVBoxLayout" name="verticalLayout_16">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_13">
+           <layout class="QVBoxLayout" name="verticalLayout_15">
             <item>
              <widget class="QGroupBox" name="groupBox">
               <property name="title">
@@ -217,6 +226,19 @@
               <layout class="QVBoxLayout" name="verticalLayout_10">
                <item>
                 <layout class="QGridLayout" name="gridLayout">
+                 <item row="0" column="2">
+                  <spacer name="horizontalSpacer_3">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
                  <item row="0" column="1">
                   <widget class="QLabel" name="minImageCountValue">
                    <property name="font">
@@ -265,18 +287,36 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="0" column="2">
-                  <spacer name="horizontalSpacer_3">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupBox_3">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>200</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Present Modes</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_13">
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_12">
+                 <item>
+                  <widget class="QTreeWidget" name="presentModesWidget">
+                   <property name="alternatingRowColors">
+                    <bool>true</bool>
                    </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
+                   <column>
+                    <property name="text">
+                     <string>Mode</string>
+                    </property>
+                   </column>
+                  </widget>
                  </item>
                 </layout>
                </item>
@@ -285,14 +325,23 @@
             </item>
             <item>
              <widget class="QGroupBox" name="groupBox_2">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="title">
                <string>Formats</string>
               </property>
-              <layout class="QVBoxLayout" name="verticalLayout_12">
+              <layout class="QVBoxLayout" name="verticalLayout_14">
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_11">
                  <item>
                   <widget class="QTreeWidget" name="surfaceFormatsWidget">
+                   <property name="alternatingRowColors">
+                    <bool>true</bool>
+                   </property>
                    <column>
                     <property name="text">
                      <string>Format</string>
@@ -314,6 +363,92 @@
           </item>
          </layout>
         </widget>
+        <widget class="QWidget" name="tab_8">
+         <attribute name="title">
+          <string>Queues</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_19">
+          <item>
+           <widget class="QGroupBox" name="groupBox_4">
+            <property name="title">
+             <string>Queue Families</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_18">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_17">
+               <item>
+                <widget class="QTreeWidget" name="queuesWidget">
+                 <property name="alternatingRowColors">
+                  <bool>true</bool>
+                 </property>
+                 <property name="uniformRowHeights">
+                  <bool>true</bool>
+                 </property>
+                 <column>
+                  <property name="text">
+                   <string>Index</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Queue Count</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Present</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Graphics</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Compute</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Transfer</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Sparse Binding</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
         <widget class="QWidget" name="tab_5">
          <attribute name="title">
           <string>Memory</string>
@@ -321,7 +456,7 @@
         </widget>
         <widget class="QWidget" name="tab_6">
          <attribute name="title">
-          <string>Formats</string>
+          <string>Image Formats</string>
          </attribute>
         </widget>
        </widget>

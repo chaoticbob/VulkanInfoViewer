@@ -7,5 +7,6 @@
 
 QString toStringVkFormat(VkFormat format);
 QString toStringVkColorSpace(VkColorSpaceKHR colorSpace);
+QString toStringVkPresentMode(VkPresentModeKHR mode);
 
 #endif // __TO_STRING_H__

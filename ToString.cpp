@@ -218,3 +218,15 @@ QString toStringVkColorSpace(VkColorSpaceKHR colorSpace)
   }
   return result;
 }
+
+QString toStringVkPresentMode(VkPresentModeKHR mode)
+{
+  QString result;
+  switch (mode) {
+    case VK_PRESENT_MODE_IMMEDIATE_KHR    : result = "VK_PRESENT_MODE_IMMEDIATE_KHR"; break;
+    case VK_PRESENT_MODE_MAILBOX_KHR      : result = "VK_PRESENT_MODE_MAILBOX_KHR"; break;
+    case VK_PRESENT_MODE_FIFO_KHR         : result = "VK_PRESENT_MODE_FIFO_KHR"; break;
+    case VK_PRESENT_MODE_FIFO_RELAXED_KHR : result = "VK_PRESENT_MODE_FIFO_RELAXED_KHR"; break;
+  }
+  return result;
+}

@@ -382,13 +382,60 @@ void MainWindow::populateSurface(VkPhysicalDevice gpu)
   Q_ASSERT(lb);
   lb->setText(QString::number(surfCaps.maxImageCount));
 
-  QTreeWidget* tw = findChild<QTreeWidget*>("surfaceFormatsWidget");
+  res = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, mVkSurface, &count, nullptr);
+  assert(res == VK_SUCCESS);
+  std::vector<VkPresentModeKHR> presentModes(count);
+  res = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, mVkSurface, &count, presentModes.data());
+  assert(res == VK_SUCCESS);
+  QTreeWidget* tw = findChild<QTreeWidget*>("presentModesWidget");
+  Q_ASSERT(tw);
+  tw->clear();
+  for (const auto& mode : presentModes) {
+    QTreeWidgetItem* item = new QTreeWidgetItem();
+    item->setText(0, toStringVkPresentMode(mode));
+    tw->addTopLevelItem(item);
+  }
+
+  tw = findChild<QTreeWidget*>("surfaceFormatsWidget");
   Q_ASSERT(tw);
   tw->clear();
   for (const auto& format : formats) {
     QTreeWidgetItem* item = new QTreeWidgetItem();
     item->setText(0, toStringVkFormat(format.format));
     item->setText(1, toStringVkColorSpace(format.colorSpace));
+    tw->addTopLevelItem(item);
+  }
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+}
+
+void MainWindow::populateQueues(VkPhysicalDevice gpu)
+{
+  uint32_t count = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(gpu, &count, nullptr);
+  std::vector<VkQueueFamilyProperties> properties(count);
+  vkGetPhysicalDeviceQueueFamilyProperties(gpu, &count, properties.data());
+
+  QTreeWidget* tw = findChild<QTreeWidget*>("queuesWidget");
+  Q_ASSERT(tw);
+  tw->clear();
+  for (size_t i = 0; i < properties.size(); ++i) {
+    VkBool32 presents = VK_FALSE;
+    VkResult res = vkGetPhysicalDeviceSurfaceSupportKHR(gpu, static_cast<uint32_t>(i), mVkSurface, &presents);
+
+    QTreeWidgetItem* item = new QTreeWidgetItem();
+    item->setText(0, QString::number(i));
+    item->setText(1, QString::number(properties[i].queueCount));
+    item->setText(2, (presents == VK_TRUE) ? "Y" : " ");
+    item->setText(3, ((properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) ? "Y" : " ");
+    item->setText(4, ((properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) != 0) ? "Y" : " ");
+    item->setText(5, ((properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) != 0) ? "Y" : " ");
+    item->setText(6, ((properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) != 0) ? "Y" : " ");
+    item->setText(7, " ");
+    for (int c = 0; c < item->columnCount(); ++c) {
+      item->setTextAlignment(c, Qt::AlignHCenter);
+    }
     tw->addTopLevelItem(item);
   }
   for (int i = 0; i < tw->columnCount(); ++i) {
@@ -405,6 +452,7 @@ void MainWindow::on_gpus_currentIndexChanged(int index)
   VkPhysicalDevice gpu = mVkGpus[index];
   populateLimits(gpu);
   populateSurface(gpu);
+  populateQueues(gpu);
 }
 
 void MainWindow::on_limitsFilter_textChanged(const QString &arg1)

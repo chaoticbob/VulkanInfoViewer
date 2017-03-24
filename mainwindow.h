@@ -46,6 +46,7 @@ private:
 
   void  populateLimits(VkPhysicalDevice gpu);
   void  populateSurface(VkPhysicalDevice gpu);
+  void  populateQueues(VkPhysicalDevice gpu);
 
 private:
   Ui::MainWindow *ui;
