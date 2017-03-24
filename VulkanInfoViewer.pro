@@ -24,13 +24,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    ToString.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    ToString.h
 
 FORMS    += mainwindow.ui
 
 INCLUDEPATH += "$$(VULKAN_SDK)/Include"
 
-LIBS += -L"$$(VULKAN_SDK)/Bin"
+LIBS += -L"$$(VULKAN_SDK)/Lib"
 LIBS += -lvulkan-1
