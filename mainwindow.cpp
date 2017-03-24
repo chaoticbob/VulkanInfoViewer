@@ -112,6 +112,10 @@ void MainWindow::populateInstanceLayers()
     item->setText(3, QString::fromUtf8(layer.description));
     tw->addTopLevelItem(item);
   }
+
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
 }
 
 void enumerateInstanceExtensions(const char *layerName, std::vector<VkExtensionProperties>* extensions)
@@ -184,6 +188,12 @@ void MainWindow::populateInstanceExtensions()
       item->setText(1, QString::number(ext.specVersion));
       topItem->addChild(item);
     }
+  }
+
+  tw->expandAll();
+
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
   }
 }
 
@@ -347,6 +357,10 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
   ADD_LIMIT(tw, limits, optimalBufferCopyOffsetAlignment);
   ADD_LIMIT(tw, limits, optimalBufferCopyRowPitchAlignment);
   ADD_LIMIT(tw, limits, nonCoherentAtomSize);
+
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
 }
 
 void MainWindow::populateSurface(VkPhysicalDevice gpu)
@@ -376,6 +390,9 @@ void MainWindow::populateSurface(VkPhysicalDevice gpu)
     item->setText(0, toStringVkFormat(format.format));
     item->setText(1, toStringVkColorSpace(format.colorSpace));
     tw->addTopLevelItem(item);
+  }
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
   }
 }
 
