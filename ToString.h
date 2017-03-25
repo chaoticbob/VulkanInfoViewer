@@ -10,6 +10,12 @@ QString toStringDeviceType(VkPhysicalDeviceType type);
 QString toStringVkFormat(VkFormat format);
 QString toStringVkColorSpace(VkColorSpaceKHR colorSpace);
 QString toStringVkPresentMode(VkPresentModeKHR mode);
+QString toStringFormatFeature(VkFormatFeatureFlagBits value);
+
 QString toStringFormatFeatureShort(VkFormatFeatureFlagBits value);
+QString toStringImageTypeShort(VkImageType value);
+QString toStringImageUsageFlagShort(VkImageUsageFlagBits value);
+
+QString toStringSampleCounts(VkSampleCountFlags value);
 
 #endif // __TO_STRING_H__

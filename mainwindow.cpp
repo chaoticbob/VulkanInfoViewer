@@ -7,11 +7,90 @@
 #include <cassert>
 #include <sstream>
 
+#include <QStandardItemModel>
+
+void HideItem(int row, QComboBox* cb)
+{
+  cb->setItemData(row, QSize(0,0), Qt::SizeHintRole);
+}
+
+void MakeCheckable(QComboBox* cb)
+{
+  QStandardItemModel* model = qobject_cast<QStandardItemModel*>(cb->model());
+  for (int i = 1; i < cb->count(); ++i) {
+    auto item = model->item(i);
+    item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+    item->setData(Qt::Unchecked, Qt::CheckStateRole);
+  }
+}
+
+//! \class MainWindow
+//!
+//!
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::MainWindow)
 {
   ui->setupUi(this);
+
+  mTilingLinearFilterInputs.formatFilter      = findChild<QLineEdit*>("tilingLinearFormatFilter");
+  mTilingLinearFilterInputs.imageTypeFilter   = findChild<QComboBox*>("tilingLinearImageType");
+  mTilingLinearFilterInputs.usageFlagsFilter  = findChild<QComboBox*>("tilingLinearImageUsage");
+  mTilingLinearFilterInputs.createFlagsFilter = findChild<QComboBox*>("tilingLinearImageCreate");
+  Q_ASSERT(mTilingLinearFilterInputs.formatFilter);
+  Q_ASSERT(mTilingLinearFilterInputs.imageTypeFilter);
+  Q_ASSERT(mTilingLinearFilterInputs.usageFlagsFilter);
+  Q_ASSERT(mTilingLinearFilterInputs.createFlagsFilter);
+
+  mTilingOptimalFilterInputs.formatFilter      = findChild<QLineEdit*>("tilingOptimalFormatFilter");
+  mTilingOptimalFilterInputs.imageTypeFilter   = findChild<QComboBox*>("tilingOptimalImageType");
+  mTilingOptimalFilterInputs.usageFlagsFilter  = findChild<QComboBox*>("tilingOptimalImageUsage");
+  mTilingOptimalFilterInputs.createFlagsFilter = findChild<QComboBox*>("tilingOptimalImageCreate");
+  Q_ASSERT(mTilingOptimalFilterInputs.formatFilter);
+  Q_ASSERT(mTilingOptimalFilterInputs.imageTypeFilter);
+  Q_ASSERT(mTilingOptimalFilterInputs.usageFlagsFilter);
+  Q_ASSERT(mTilingOptimalFilterInputs.createFlagsFilter);
+
+  HideItem(0,  mTilingLinearFilterInputs.usageFlagsFilter);
+  HideItem(0,  mTilingLinearFilterInputs.createFlagsFilter);
+  MakeCheckable(mTilingLinearFilterInputs.usageFlagsFilter);
+  MakeCheckable(mTilingLinearFilterInputs.createFlagsFilter);
+
+  HideItem(0,  mTilingOptimalFilterInputs.usageFlagsFilter);
+  HideItem(0,  mTilingOptimalFilterInputs.createFlagsFilter);
+  MakeCheckable(mTilingOptimalFilterInputs.usageFlagsFilter);
+  MakeCheckable(mTilingOptimalFilterInputs.createFlagsFilter);
+
+/*
+  QComboBox* cb = findChild<QComboBox*>("tilingLinearImageUsage");
+  Q_ASSERT(cb);
+  MakeCheckable(cb);
+  cb = findChild<QComboBox*>("tilingLinearImageCreate");
+  Q_ASSERT(cb);
+  MakeCheckable(cb);
+
+
+  cb = findChild<QComboBox*>("tilingOptimalImageUsage");
+  Q_ASSERT(cb);
+  MakeCheckable(cb);
+//  cb = findChild<QComboBox*>("tilingOptimalImageCreate");
+//  Q_ASSERT(cb);
+//  MakeCheckable(cb);
+
+  connect(cb->model(), SIGNAL(itemChanged(QStandardItem*)),
+          this, SLOT(on_itemChanged(QStandardItem*)));
+
+  cb = findChild<QComboBox*>("tilingLinearImageType");
+  Q_ASSERT(cb);
+  HideItem()
+*/
+
+//  auto model = new QStandardItemModel();
+//  auto item = new QStandardItem("First");
+//  item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+//  item->setData(Qt::Unchecked, Qt::CheckStateRole);
+//  model->setItem(0, item);
+//  cb->setModel(model);
 
   createVulkanInstance();
   createVulkanSurface();
@@ -53,15 +132,15 @@ void MainWindow::createVulkanInstance()
   createInfo.pApplicationInfo         = &appInfo;
   createInfo.enabledExtensionCount    = static_cast<uint32_t>(extensions.size());
   createInfo.ppEnabledExtensionNames  = extensions.empty() ? nullptr : extensions.data();
-  VkResult res = vkCreateInstance(&createInfo, nullptr, &mVkInstance);
+  VkResult res = vkCreateInstance(&createInfo, nullptr, &mInstance);
   assert(res == VK_SUCCESS);
 }
 
 void MainWindow::destroyVulkanInstance()
 {
-  if (mVkInstance != VK_NULL_HANDLE) {
-    vkDestroyInstance(mVkInstance, nullptr);
-    mVkInstance = VK_NULL_HANDLE;
+  if (mInstance != VK_NULL_HANDLE) {
+    vkDestroyInstance(mInstance, nullptr);
+    mInstance = VK_NULL_HANDLE;
   }
 }
 
@@ -70,7 +149,7 @@ void MainWindow::createVulkanSurface()
   VkWin32SurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
   createInfo.hinstance = ::GetModuleHandle(nullptr);
   createInfo.hwnd      = (HWND)this->winId();
-  VkResult res = vkCreateWin32SurfaceKHR(mVkInstance, &createInfo, nullptr, &mVkSurface);
+  VkResult res = vkCreateWin32SurfaceKHR(mInstance, &createInfo, nullptr, &mSurface);
   assert(res == VK_SUCCESS);
 }
 
@@ -105,6 +184,8 @@ void MainWindow::populateInstanceLayers()
     item->setText(1, toStringVersion(layer.specVersion));
     item->setText(2, QString::number(layer.implementationVersion));
     item->setText(3, QString::fromUtf8(layer.description));
+    item->setTextAlignment(1, Qt::AlignHCenter);              \
+    item->setTextAlignment(2, Qt::AlignHCenter);
     tw->addTopLevelItem(item);
   }
 
@@ -143,22 +224,6 @@ void MainWindow::enumerateInstanceExtensions()
   }
 }
 
-//void MainWindow::scanInstanceExtensions(const std::vector<VkLayerProperties>& layers, std::map<std::string, std::vector<VkExtensionProperties>>* layerExtensions)
-//{
-//  for(const auto& layer : layers) {
-//    std::string layerName = layer.layerName;
-//    std::vector<VkExtensionProperties> extensions;
-//    enumerateInstanceExtensions(layerName.c_str(), &extensions);
-//    if (! extensions.empty()) {
-//      (*layerExtensions)[layerName] = extensions;
-//    }
-//  }
-
-//  std::vector<VkExtensionProperties> extensions;
-//  enumerateInstanceExtensions(nullptr, &extensions);
-//  (*layerExtensions)[""] = extensions;
-//}
-
 void MainWindow::populateInstanceExtensions()
 {
   QTreeWidget* tw = findChild<QTreeWidget*>("extensionsWidget");
@@ -180,7 +245,8 @@ void MainWindow::populateInstanceExtensions()
     for (const auto& ext : extensions) {
       QTreeWidgetItem* item = new QTreeWidgetItem();
       item->setText(0, QString::fromUtf8(ext.extensionName));
-      item->setText(1, QString::number(ext.specVersion));
+      item->setText(1, QString::number(ext.specVersion));      
+      item->setTextAlignment(1, Qt::AlignHCenter);              \
       topItem->addChild(item);
     }
   }
@@ -195,16 +261,16 @@ void MainWindow::populateInstanceExtensions()
 void MainWindow::enumerateGpus()
 {
   uint32_t count = 0;
-  VkResult res = vkEnumeratePhysicalDevices(mVkInstance, &count, nullptr);
+  VkResult res = vkEnumeratePhysicalDevices(mInstance, &count, nullptr);
   assert(res == VK_SUCCESS);
-  mVkGpus.resize(count);
-  res = vkEnumeratePhysicalDevices(mVkInstance, &count, mVkGpus.data());
+  mGpus.resize(count);
+  res = vkEnumeratePhysicalDevices(mInstance, &count, mGpus.data());
   assert(res == VK_SUCCESS);
 
   for (uint32_t i = 0; i < count; ++i) {
     VkPhysicalDeviceProperties properties = {};
-    vkGetPhysicalDeviceProperties(mVkGpus[i], &properties);
-    mVkGpuProperties[mVkGpus[i]] = properties;
+    vkGetPhysicalDeviceProperties(mGpus[i], &properties);
+    mGpuProperties[mGpus[i]] = properties;
   }
 }
 
@@ -215,7 +281,7 @@ void MainWindow::populateGpus()
 
   cb->clear();
 
-  for (const auto& it : mVkGpuProperties) {
+  for (const auto& it : mGpuProperties) {
     const auto& properties = it.second;
     cb->addItem(QString::fromUtf8(properties.deviceName));
   }
@@ -223,8 +289,8 @@ void MainWindow::populateGpus()
 
 void MainWindow::populateGeneral(VkPhysicalDevice gpu)
 {
-  auto it = mVkGpuProperties.find(gpu);
-  if (it == mVkGpuProperties.end()) {
+  auto it = mGpuProperties.find(gpu);
+  if (it == mGpuProperties.end()) {
     return;
   }
 
@@ -263,11 +329,12 @@ void MainWindow::populateGeneral(VkPhysicalDevice gpu)
   lb->setText(uuid.toUpper());
 }
 
-#define ADD_LIMIT(tw, limits, prop)                 \
+#define ADD_LIMIT(locale, tw, limits, prop)                 \
   {                                                 \
     QTreeWidgetItem* item = new QTreeWidgetItem();  \
     item->setText(0, QString::fromUtf8(#prop));     \
-    item->setText(1, QString::number(limits.prop)); \
+    item->setText(1, locale.toString(limits.prop)); \
+    item->setTextAlignment(1, Qt::AlignRight);      \
     tw->addTopLevelItem(item);                      \
   }
 
@@ -280,126 +347,128 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
 
   tw->clear();
 
-  auto it = mVkGpuProperties.find(gpu);
-  if (it == mVkGpuProperties.end()) {
+  auto it = mGpuProperties.find(gpu);
+  if (it == mGpuProperties.end()) {
     return;
   }
   const auto &limits = it->second.limits;
 
-  ADD_LIMIT(tw, limits, maxImageDimension1D);
-  ADD_LIMIT(tw, limits, maxImageDimension2D);
-  ADD_LIMIT(tw, limits, maxImageDimension3D);
-  ADD_LIMIT(tw, limits, maxImageDimensionCube);
-  ADD_LIMIT(tw, limits, maxImageArrayLayers);
-  ADD_LIMIT(tw, limits, maxTexelBufferElements);
-  ADD_LIMIT(tw, limits, maxUniformBufferRange);
-  ADD_LIMIT(tw, limits, maxStorageBufferRange);
-  ADD_LIMIT(tw, limits, maxPushConstantsSize);
-  ADD_LIMIT(tw, limits, maxMemoryAllocationCount);
-  ADD_LIMIT(tw, limits, maxSamplerAllocationCount);
-  ADD_LIMIT(tw, limits, bufferImageGranularity);
-  ADD_LIMIT(tw, limits, sparseAddressSpaceSize);
-  ADD_LIMIT(tw, limits, maxBoundDescriptorSets);
-  ADD_LIMIT(tw, limits, maxPerStageDescriptorSamplers);
-  ADD_LIMIT(tw, limits, maxPerStageDescriptorUniformBuffers);
-  ADD_LIMIT(tw, limits, maxPerStageDescriptorStorageBuffers);
-  ADD_LIMIT(tw, limits, maxPerStageDescriptorSampledImages);
-  ADD_LIMIT(tw, limits, maxPerStageDescriptorStorageImages);
-  ADD_LIMIT(tw, limits, maxPerStageDescriptorInputAttachments);
-  ADD_LIMIT(tw, limits, maxPerStageResources);
-  ADD_LIMIT(tw, limits, maxDescriptorSetSamplers);
-  ADD_LIMIT(tw, limits, maxDescriptorSetUniformBuffers);
-  ADD_LIMIT(tw, limits, maxDescriptorSetUniformBuffersDynamic);
-  ADD_LIMIT(tw, limits, maxDescriptorSetStorageBuffers);
-  ADD_LIMIT(tw, limits, maxDescriptorSetStorageBuffersDynamic);
-  ADD_LIMIT(tw, limits, maxDescriptorSetSampledImages);
-  ADD_LIMIT(tw, limits, maxDescriptorSetStorageImages);
-  ADD_LIMIT(tw, limits, maxDescriptorSetInputAttachments);
-  ADD_LIMIT(tw, limits, maxVertexInputAttributes);
-  ADD_LIMIT(tw, limits, maxVertexInputBindings);
-  ADD_LIMIT(tw, limits, maxVertexInputAttributeOffset);
-  ADD_LIMIT(tw, limits, maxVertexInputBindingStride);
-  ADD_LIMIT(tw, limits, maxVertexOutputComponents);
-  ADD_LIMIT(tw, limits, maxTessellationGenerationLevel);
-  ADD_LIMIT(tw, limits, maxTessellationPatchSize);
-  ADD_LIMIT(tw, limits, maxTessellationControlPerVertexInputComponents);
-  ADD_LIMIT(tw, limits, maxTessellationControlPerVertexOutputComponents);
-  ADD_LIMIT(tw, limits, maxTessellationControlPerPatchOutputComponents);
-  ADD_LIMIT(tw, limits, maxTessellationControlTotalOutputComponents);
-  ADD_LIMIT(tw, limits, maxTessellationEvaluationInputComponents);
-  ADD_LIMIT(tw, limits, maxTessellationEvaluationOutputComponents);
-  ADD_LIMIT(tw, limits, maxGeometryShaderInvocations);
-  ADD_LIMIT(tw, limits, maxGeometryInputComponents);
-  ADD_LIMIT(tw, limits, maxGeometryOutputComponents);
-  ADD_LIMIT(tw, limits, maxGeometryOutputVertices);
-  ADD_LIMIT(tw, limits, maxGeometryTotalOutputComponents);
-  ADD_LIMIT(tw, limits, maxFragmentInputComponents);
-  ADD_LIMIT(tw, limits, maxFragmentOutputAttachments);
-  ADD_LIMIT(tw, limits, maxFragmentDualSrcAttachments);
-  ADD_LIMIT(tw, limits, maxFragmentCombinedOutputResources);
-  ADD_LIMIT(tw, limits, maxComputeSharedMemorySize);
-  ADD_LIMIT(tw, limits, maxComputeWorkGroupCount[0]);
-  ADD_LIMIT(tw, limits, maxComputeWorkGroupCount[1]);
-  ADD_LIMIT(tw, limits, maxComputeWorkGroupCount[2]);
-  ADD_LIMIT(tw, limits, maxComputeWorkGroupInvocations);
-  ADD_LIMIT(tw, limits, maxComputeWorkGroupSize[0]);
-  ADD_LIMIT(tw, limits, maxComputeWorkGroupSize[1]);
-  ADD_LIMIT(tw, limits, maxComputeWorkGroupSize[2]);
-  ADD_LIMIT(tw, limits, subPixelPrecisionBits);
-  ADD_LIMIT(tw, limits, subTexelPrecisionBits);
-  ADD_LIMIT(tw, limits, mipmapPrecisionBits);
-  ADD_LIMIT(tw, limits, maxDrawIndexedIndexValue);
-  ADD_LIMIT(tw, limits, maxDrawIndirectCount);
-  ADD_LIMIT(tw, limits, maxSamplerLodBias);
-  ADD_LIMIT(tw, limits, maxSamplerAnisotropy);
-  ADD_LIMIT(tw, limits, maxViewports);
-  ADD_LIMIT(tw, limits, maxViewportDimensions[0]);
-  ADD_LIMIT(tw, limits, maxViewportDimensions[1]);
-  ADD_LIMIT(tw, limits, viewportBoundsRange[0]);
-  ADD_LIMIT(tw, limits, viewportBoundsRange[1]);
-  ADD_LIMIT(tw, limits, viewportSubPixelBits);
-  ADD_LIMIT(tw, limits, minMemoryMapAlignment);
-  ADD_LIMIT(tw, limits, minTexelBufferOffsetAlignment);
-  ADD_LIMIT(tw, limits, minUniformBufferOffsetAlignment);
-  ADD_LIMIT(tw, limits, minStorageBufferOffsetAlignment);
-  ADD_LIMIT(tw, limits, minTexelOffset);
-  ADD_LIMIT(tw, limits, maxTexelOffset);
-  ADD_LIMIT(tw, limits, minTexelGatherOffset);
-  ADD_LIMIT(tw, limits, maxTexelGatherOffset);
-  ADD_LIMIT(tw, limits, minInterpolationOffset);
-  ADD_LIMIT(tw, limits, maxInterpolationOffset);
-  ADD_LIMIT(tw, limits, subPixelInterpolationOffsetBits);
-  ADD_LIMIT(tw, limits, maxFramebufferWidth);
-  ADD_LIMIT(tw, limits, maxFramebufferHeight);
-  ADD_LIMIT(tw, limits, maxFramebufferLayers);
-  ADD_LIMIT(tw, limits, framebufferColorSampleCounts);
-  ADD_LIMIT(tw, limits, framebufferDepthSampleCounts);
-  ADD_LIMIT(tw, limits, framebufferStencilSampleCounts);
-  ADD_LIMIT(tw, limits, framebufferNoAttachmentsSampleCounts);
-  ADD_LIMIT(tw, limits, maxColorAttachments);
-  ADD_LIMIT(tw, limits, sampledImageColorSampleCounts);
-  ADD_LIMIT(tw, limits, sampledImageIntegerSampleCounts);
-  ADD_LIMIT(tw, limits, sampledImageDepthSampleCounts);
-  ADD_LIMIT(tw, limits, sampledImageStencilSampleCounts);
-  ADD_LIMIT(tw, limits, storageImageSampleCounts);
-  ADD_LIMIT(tw, limits, maxSampleMaskWords);
-  ADD_LIMIT(tw, limits, timestampComputeAndGraphics);
-  ADD_LIMIT(tw, limits, timestampPeriod);
-  ADD_LIMIT(tw, limits, maxClipDistances);
-  ADD_LIMIT(tw, limits, maxCullDistances);
-  ADD_LIMIT(tw, limits, maxCombinedClipAndCullDistances);
-  ADD_LIMIT(tw, limits, discreteQueuePriorities);
-  ADD_LIMIT(tw, limits, pointSizeRange[0]);
-  ADD_LIMIT(tw, limits, pointSizeRange[1]);
-  ADD_LIMIT(tw, limits, lineWidthRange[0]);
-  ADD_LIMIT(tw, limits, lineWidthRange[1]);
-  ADD_LIMIT(tw, limits, pointSizeGranularity);
-  ADD_LIMIT(tw, limits, lineWidthGranularity);
-  ADD_LIMIT(tw, limits, strictLines);
-  ADD_LIMIT(tw, limits, standardSampleLocations);
-  ADD_LIMIT(tw, limits, optimalBufferCopyOffsetAlignment);
-  ADD_LIMIT(tw, limits, optimalBufferCopyRowPitchAlignment);
-  ADD_LIMIT(tw, limits, nonCoherentAtomSize);
+  QLocale locale;
+
+  ADD_LIMIT(locale, tw, limits, maxImageDimension1D);
+  ADD_LIMIT(locale, tw, limits, maxImageDimension2D);
+  ADD_LIMIT(locale, tw, limits, maxImageDimension3D);
+  ADD_LIMIT(locale, tw, limits, maxImageDimensionCube);
+  ADD_LIMIT(locale, tw, limits, maxImageArrayLayers);
+  ADD_LIMIT(locale, tw, limits, maxTexelBufferElements);
+  ADD_LIMIT(locale, tw, limits, maxUniformBufferRange);
+  ADD_LIMIT(locale, tw, limits, maxStorageBufferRange);
+  ADD_LIMIT(locale, tw, limits, maxPushConstantsSize);
+  ADD_LIMIT(locale, tw, limits, maxMemoryAllocationCount);
+  ADD_LIMIT(locale, tw, limits, maxSamplerAllocationCount);
+  ADD_LIMIT(locale, tw, limits, bufferImageGranularity);
+  ADD_LIMIT(locale, tw, limits, sparseAddressSpaceSize);
+  ADD_LIMIT(locale, tw, limits, maxBoundDescriptorSets);
+  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorSamplers);
+  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorUniformBuffers);
+  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorStorageBuffers);
+  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorSampledImages);
+  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorStorageImages);
+  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorInputAttachments);
+  ADD_LIMIT(locale, tw, limits, maxPerStageResources);
+  ADD_LIMIT(locale, tw, limits, maxDescriptorSetSamplers);
+  ADD_LIMIT(locale, tw, limits, maxDescriptorSetUniformBuffers);
+  ADD_LIMIT(locale, tw, limits, maxDescriptorSetUniformBuffersDynamic);
+  ADD_LIMIT(locale, tw, limits, maxDescriptorSetStorageBuffers);
+  ADD_LIMIT(locale, tw, limits, maxDescriptorSetStorageBuffersDynamic);
+  ADD_LIMIT(locale, tw, limits, maxDescriptorSetSampledImages);
+  ADD_LIMIT(locale, tw, limits, maxDescriptorSetStorageImages);
+  ADD_LIMIT(locale, tw, limits, maxDescriptorSetInputAttachments);
+  ADD_LIMIT(locale, tw, limits, maxVertexInputAttributes);
+  ADD_LIMIT(locale, tw, limits, maxVertexInputBindings);
+  ADD_LIMIT(locale, tw, limits, maxVertexInputAttributeOffset);
+  ADD_LIMIT(locale, tw, limits, maxVertexInputBindingStride);
+  ADD_LIMIT(locale, tw, limits, maxVertexOutputComponents);
+  ADD_LIMIT(locale, tw, limits, maxTessellationGenerationLevel);
+  ADD_LIMIT(locale, tw, limits, maxTessellationPatchSize);
+  ADD_LIMIT(locale, tw, limits, maxTessellationControlPerVertexInputComponents);
+  ADD_LIMIT(locale, tw, limits, maxTessellationControlPerVertexOutputComponents);
+  ADD_LIMIT(locale, tw, limits, maxTessellationControlPerPatchOutputComponents);
+  ADD_LIMIT(locale, tw, limits, maxTessellationControlTotalOutputComponents);
+  ADD_LIMIT(locale, tw, limits, maxTessellationEvaluationInputComponents);
+  ADD_LIMIT(locale, tw, limits, maxTessellationEvaluationOutputComponents);
+  ADD_LIMIT(locale, tw, limits, maxGeometryShaderInvocations);
+  ADD_LIMIT(locale, tw, limits, maxGeometryInputComponents);
+  ADD_LIMIT(locale, tw, limits, maxGeometryOutputComponents);
+  ADD_LIMIT(locale, tw, limits, maxGeometryOutputVertices);
+  ADD_LIMIT(locale, tw, limits, maxGeometryTotalOutputComponents);
+  ADD_LIMIT(locale, tw, limits, maxFragmentInputComponents);
+  ADD_LIMIT(locale, tw, limits, maxFragmentOutputAttachments);
+  ADD_LIMIT(locale, tw, limits, maxFragmentDualSrcAttachments);
+  ADD_LIMIT(locale, tw, limits, maxFragmentCombinedOutputResources);
+  ADD_LIMIT(locale, tw, limits, maxComputeSharedMemorySize);
+  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupCount[0]);
+  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupCount[1]);
+  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupCount[2]);
+  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupInvocations);
+  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupSize[0]);
+  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupSize[1]);
+  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupSize[2]);
+  ADD_LIMIT(locale, tw, limits, subPixelPrecisionBits);
+  ADD_LIMIT(locale, tw, limits, subTexelPrecisionBits);
+  ADD_LIMIT(locale, tw, limits, mipmapPrecisionBits);
+  ADD_LIMIT(locale, tw, limits, maxDrawIndexedIndexValue);
+  ADD_LIMIT(locale, tw, limits, maxDrawIndirectCount);
+  ADD_LIMIT(locale, tw, limits, maxSamplerLodBias);
+  ADD_LIMIT(locale, tw, limits, maxSamplerAnisotropy);
+  ADD_LIMIT(locale, tw, limits, maxViewports);
+  ADD_LIMIT(locale, tw, limits, maxViewportDimensions[0]);
+  ADD_LIMIT(locale, tw, limits, maxViewportDimensions[1]);
+  ADD_LIMIT(locale, tw, limits, viewportBoundsRange[0]);
+  ADD_LIMIT(locale, tw, limits, viewportBoundsRange[1]);
+  ADD_LIMIT(locale, tw, limits, viewportSubPixelBits);
+  ADD_LIMIT(locale, tw, limits, minMemoryMapAlignment);
+  ADD_LIMIT(locale, tw, limits, minTexelBufferOffsetAlignment);
+  ADD_LIMIT(locale, tw, limits, minUniformBufferOffsetAlignment);
+  ADD_LIMIT(locale, tw, limits, minStorageBufferOffsetAlignment);
+  ADD_LIMIT(locale, tw, limits, minTexelOffset);
+  ADD_LIMIT(locale, tw, limits, maxTexelOffset);
+  ADD_LIMIT(locale, tw, limits, minTexelGatherOffset);
+  ADD_LIMIT(locale, tw, limits, maxTexelGatherOffset);
+  ADD_LIMIT(locale, tw, limits, minInterpolationOffset);
+  ADD_LIMIT(locale, tw, limits, maxInterpolationOffset);
+  ADD_LIMIT(locale, tw, limits, subPixelInterpolationOffsetBits);
+  ADD_LIMIT(locale, tw, limits, maxFramebufferWidth);
+  ADD_LIMIT(locale, tw, limits, maxFramebufferHeight);
+  ADD_LIMIT(locale, tw, limits, maxFramebufferLayers);
+  ADD_LIMIT(locale, tw, limits, framebufferColorSampleCounts);
+  ADD_LIMIT(locale, tw, limits, framebufferDepthSampleCounts);
+  ADD_LIMIT(locale, tw, limits, framebufferStencilSampleCounts);
+  ADD_LIMIT(locale, tw, limits, framebufferNoAttachmentsSampleCounts);
+  ADD_LIMIT(locale, tw, limits, maxColorAttachments);
+  ADD_LIMIT(locale, tw, limits, sampledImageColorSampleCounts);
+  ADD_LIMIT(locale, tw, limits, sampledImageIntegerSampleCounts);
+  ADD_LIMIT(locale, tw, limits, sampledImageDepthSampleCounts);
+  ADD_LIMIT(locale, tw, limits, sampledImageStencilSampleCounts);
+  ADD_LIMIT(locale, tw, limits, storageImageSampleCounts);
+  ADD_LIMIT(locale, tw, limits, maxSampleMaskWords);
+  ADD_LIMIT(locale, tw, limits, timestampComputeAndGraphics);
+  ADD_LIMIT(locale, tw, limits, timestampPeriod);
+  ADD_LIMIT(locale, tw, limits, maxClipDistances);
+  ADD_LIMIT(locale, tw, limits, maxCullDistances);
+  ADD_LIMIT(locale, tw, limits, maxCombinedClipAndCullDistances);
+  ADD_LIMIT(locale, tw, limits, discreteQueuePriorities);
+  ADD_LIMIT(locale, tw, limits, pointSizeRange[0]);
+  ADD_LIMIT(locale, tw, limits, pointSizeRange[1]);
+  ADD_LIMIT(locale, tw, limits, lineWidthRange[0]);
+  ADD_LIMIT(locale, tw, limits, lineWidthRange[1]);
+  ADD_LIMIT(locale, tw, limits, pointSizeGranularity);
+  ADD_LIMIT(locale, tw, limits, lineWidthGranularity);
+  ADD_LIMIT(locale, tw, limits, strictLines);
+  ADD_LIMIT(locale, tw, limits, standardSampleLocations);
+  ADD_LIMIT(locale, tw, limits, optimalBufferCopyOffsetAlignment);
+  ADD_LIMIT(locale, tw, limits, optimalBufferCopyRowPitchAlignment);
+  ADD_LIMIT(locale, tw, limits, nonCoherentAtomSize);
 
   for (int i = 0; i < tw->columnCount(); ++i) {
     tw->resizeColumnToContents(i);
@@ -410,7 +479,8 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
   {                                                           \
     QTreeWidgetItem* item = new QTreeWidgetItem();            \
     item->setText(0, QString::fromUtf8(#prop));               \
-    item->setText(1, (sparse.prop == VK_TRUE) ? "Y" : " "); \
+    item->setText(1, (sparse.prop == VK_TRUE) ? "Y" : "");   \
+    item->setTextAlignment(1, Qt::AlignHCenter);              \
     tw->addTopLevelItem(item);                                \
   }
 
@@ -423,8 +493,8 @@ void MainWindow::populateSparse(VkPhysicalDevice gpu)
 
   tw->clear();
 
-  auto it = mVkGpuProperties.find(gpu);
-  if (it == mVkGpuProperties.end()) {
+  auto it = mGpuProperties.find(gpu);
+  if (it == mGpuProperties.end()) {
     return;
   }
 
@@ -445,7 +515,8 @@ void MainWindow::populateSparse(VkPhysicalDevice gpu)
   {                                                           \
     QTreeWidgetItem* item = new QTreeWidgetItem();            \
     item->setText(0, QString::fromUtf8(#prop));               \
-    item->setText(1, (features.prop == VK_TRUE) ? "Y" : " "); \
+    item->setText(1, (features.prop == VK_TRUE) ? "Y" : ""); \
+    item->setTextAlignment(1, Qt::AlignHCenter);              \
     tw->addTopLevelItem(item);                                \
   }
 
@@ -525,13 +596,13 @@ void MainWindow::populateFeatures(VkPhysicalDevice gpu)
 void MainWindow::populateSurface(VkPhysicalDevice gpu)
 {
   VkSurfaceCapabilitiesKHR surfCaps = {};
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, mVkSurface, &surfCaps);
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, mSurface, &surfCaps);
 
   uint32_t count = 0;
-  VkResult res = vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, mVkSurface, &count, nullptr);
+  VkResult res = vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, mSurface, &count, nullptr);
   assert(res == VK_SUCCESS);
   std::vector<VkSurfaceFormatKHR> formats(count);
-  res = vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, mVkSurface, &count, formats.data());
+  res = vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, mSurface, &count, formats.data());
   assert(res == VK_SUCCESS);
 
   QLabel* lb = findChild<QLabel*>("minImageCountValue");
@@ -541,10 +612,10 @@ void MainWindow::populateSurface(VkPhysicalDevice gpu)
   Q_ASSERT(lb);
   lb->setText(QString::number(surfCaps.maxImageCount));
 
-  res = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, mVkSurface, &count, nullptr);
+  res = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, mSurface, &count, nullptr);
   assert(res == VK_SUCCESS);
   std::vector<VkPresentModeKHR> presentModes(count);
-  res = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, mVkSurface, &count, presentModes.data());
+  res = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, mSurface, &count, presentModes.data());
   assert(res == VK_SUCCESS);
   QTreeWidget* tw = findChild<QTreeWidget*>("presentModesWidget");
   Q_ASSERT(tw);
@@ -584,17 +655,17 @@ void MainWindow::populateQueues(VkPhysicalDevice gpu)
   tw->clear();
   for (size_t i = 0; i < properties.size(); ++i) {
     VkBool32 presents = VK_FALSE;
-    VkResult res = vkGetPhysicalDeviceSurfaceSupportKHR(gpu, static_cast<uint32_t>(i), mVkSurface, &presents);
+    VkResult res = vkGetPhysicalDeviceSurfaceSupportKHR(gpu, static_cast<uint32_t>(i), mSurface, &presents);
     assert(res == VK_SUCCESS);
 
     QTreeWidgetItem* item = new QTreeWidgetItem();
     item->setText(0, QString::number(i));
     item->setText(1, QString::number(properties[i].queueCount));
-    item->setText(2, (presents == VK_TRUE) ? "Y" : " ");
-    item->setText(3, ((properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) ? "Y" : " ");
-    item->setText(4, ((properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) != 0) ? "Y" : " ");
-    item->setText(5, ((properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) != 0) ? "Y" : " ");
-    item->setText(6, ((properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) != 0) ? "Y" : " ");
+    item->setText(2, (presents == VK_TRUE) ? "Y" : "");
+    item->setText(3, ((properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) ? "Y" : "");
+    item->setText(4, ((properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) != 0) ? "Y" : "");
+    item->setText(5, ((properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) != 0) ? "Y" : "");
+    item->setText(6, ((properties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) != 0) ? "Y" : "");
     item->setText(7, " ");
     for (int c = 0; c < item->columnCount(); ++c) {
       item->setTextAlignment(c, Qt::AlignHCenter);
@@ -606,12 +677,59 @@ void MainWindow::populateQueues(VkPhysicalDevice gpu)
   }
 }
 
-QTreeWidgetItem* buildFormatFeatures(QTreeWidgetItem* parentItem, const QString& featureName, VkFormatFeatureFlags features)
+void MainWindow::populateMemory(VkPhysicalDevice gpu)
 {
-  if (features == 0) {
-    return nullptr;
+  VkPhysicalDeviceMemoryProperties properties = {};
+  vkGetPhysicalDeviceMemoryProperties(gpu, &properties);
+
+  // Memory types
+  QTreeWidget* tw = findChild<QTreeWidget*>("memoryTypesWidget");
+  Q_ASSERT(tw);
+  for (uint32_t i = 0; i < properties.memoryTypeCount; ++i) {
+    const auto& type = properties.memoryTypes[i];
+    auto item = new QTreeWidgetItem();
+    item->setText(0, QString::number(i));
+    item->setText(1, QString::number(type.heapIndex));
+    item->setText(2, ((type.propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) != 0) ? "Y" : "");
+    item->setText(3, ((type.propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0) ? "Y" : "");
+    item->setText(4, ((type.propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) != 0) ? "Y" : "");
+    item->setText(5, ((type.propertyFlags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) != 0) ? "Y" : "");
+    item->setText(6, ((type.propertyFlags & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT) != 0) ? "Y" : "");
+    for (int c = 0; c < item->columnCount(); ++c) {
+      item->setTextAlignment(c, Qt::AlignHCenter);
+    }
+    tw->addTopLevelItem(item);
+  }
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
   }
 
+  // Memory heaps
+  QLocale locale;
+  tw = findChild<QTreeWidget*>("memoryHeapsWidget");
+  Q_ASSERT(tw);
+  for (uint32_t i = 0; i < properties.memoryHeapCount; ++i) {
+    const auto& heap = properties.memoryHeaps[i];
+    QString bytes = locale.toString(heap.size) + " bytes";
+    QString mbytes = locale.toString(heap.size / 1048576.0f) + " MB";
+
+    auto item = new QTreeWidgetItem();
+    item->setText(0, QString::number(i));
+    //item->setText(1, QString::number(heap.size));
+    item->setText(1, mbytes + " (" + bytes +")");
+    item->setText(2, ((heap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0) ? "Y" : "");
+    item->setTextAlignment(0, Qt::AlignHCenter);
+    item->setTextAlignment(1, Qt::AlignRight);
+    item->setTextAlignment(2, Qt::AlignHCenter);
+    tw->addTopLevelItem(item);
+  }
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+}
+
+QTreeWidgetItem* buildFormatFeatures(QTreeWidgetItem* parentItem, const VkFormatProperties& properties)
+{
   std::vector<VkFormatFeatureFlagBits> flags = {
     VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT,
     VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT,
@@ -630,133 +748,198 @@ QTreeWidgetItem* buildFormatFeatures(QTreeWidgetItem* parentItem, const QString&
     VK_FORMAT_FEATURE_TRANSFER_DST_BIT_KHR,
   };
 
-  QTreeWidgetItem* featureItem = new QTreeWidgetItem();
-  featureItem->setText(0, featureName);
-  parentItem->addChild(featureItem);
-
   for (const auto& flag : flags) {
-    if ((features & flag) == 0) {
-      continue;
-    }
-
     QTreeWidgetItem* item = new QTreeWidgetItem();
-    item->setText(0, toStringFormatFeatureShort(flag));
-    featureItem->addChild(item);
+    item->setText(0, toStringFormatFeature(flag));
+
+    item->setText(1, ((properties.linearTilingFeatures & flag) != 0) ? "Y" : "");
+    item->setText(2, ((properties.optimalTilingFeatures & flag) != 0) ? "Y" : "");
+    item->setText(3, ((properties.bufferFeatures & flag) != 0) ? "Y" : "");
+
+    item->setTextAlignment(1, Qt::AlignHCenter);
+    item->setTextAlignment(2, Qt::AlignHCenter);
+    item->setTextAlignment(3, Qt::AlignHCenter);
+
+    parentItem->addChild(item);
   }
 
   return nullptr;
 }
 
-void updateImageFormatProperties(
-    VkPhysicalDevice   gpu,
-    QTreeWidgetItem*   item,
-    VkFormat           format,
-    VkImageType        imageType,
-    VkImageTiling      tiling,
-    VkImageUsageFlags  usageFlags,
-    VkImageCreateFlags createFlags
+void populateImageFormats(
+  VkPhysicalDevice  gpu,
+  QTreeWidget*      tw,
+  VkImageTiling     tiling
 )
 {
-  VkImageFormatProperties properties = {};
-  VkResult res = vkGetPhysicalDeviceImageFormatProperties(gpu, format, imageType,
-      tiling, usageFlags, createFlags, &properties);
-  if (res != VK_SUCCESS) {
-    return;
-  }
+  uint32_t start = static_cast<uint32_t>(VK_FORMAT_BEGIN_RANGE) + 1;
+  uint32_t end = static_cast<uint32_t>(VK_FORMAT_END_RANGE);
 
-  item->setText(5, QString::number(properties.maxMipLevels));
-  item->setText(6, QString::number(properties.maxArrayLayers));
-  item->setText(8, QString::number(properties.maxResourceSize));
+  tw->clear();
+  for (uint32_t i = start; i <= end; ++i) {
+    VkFormat format = static_cast<VkFormat>(i);
+    VkFormatProperties properties = {};
+    vkGetPhysicalDeviceFormatProperties(gpu, format, &properties);
+    VkFormatFeatureFlags features = static_cast<VkFormatFeatureFlags>(0);
+    if (tiling == VK_IMAGE_TILING_LINEAR) {
+      features = properties.linearTilingFeatures;
+    }
+    else if (tiling == VK_IMAGE_TILING_OPTIMAL) {
+      features = properties.optimalTilingFeatures;
+    }
+    else {
+      features = properties.bufferFeatures;
+    }
 
-  item->setTextAlignment(5, Qt::AlignHCenter);
-  item->setTextAlignment(6, Qt::AlignHCenter);
-  item->setTextAlignment(8, Qt::AlignHCenter);
-}
-
-void updateImageFormatProperties(VkPhysicalDevice gpu, QTreeWidgetItem* item)
-{
-  if ((item == nullptr) || (item->childCount() == 0)) {
-    return;
-  }
-
-  VkFormat format = static_cast<VkFormat>(item->data(0, Qt::UserRole).value<uint32_t>());
-  if (format == VK_FORMAT_UNDEFINED) {
-    return;
-  }
-
-  for (int i = 0; i < item->childCount(); ++i) {
-    auto childItem = item->child(i);
-    QString childLabel = childItem->text(0);
-    if (childLabel == "Buffer") {
+    if (features == 0) {
       continue;
     }
-    VkImageTiling tiling = (childLabel == "Tiling Optimal") ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR;
-    updateImageFormatProperties(gpu, childItem, format, VK_IMAGE_TYPE_2D, tiling, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0);
+
+    QTreeWidgetItem* item = new QTreeWidgetItem();
+    item->setData(0, Qt::UserRole, QVariant::fromValue(i));
+    item->setText(0, toStringVkFormat(format));
+
+    // Populate the buffer usages
+    if ((tiling != VK_IMAGE_TILING_LINEAR) && (tiling != VK_IMAGE_TILING_OPTIMAL)) {
+      item->setText(1, ((features & VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT) != 0) ? "Y" : "");
+      item->setText(2, ((features & VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT) != 0) ? "Y" : "");
+      item->setText(3, ((features & VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT) != 0) ? "Y" : "");
+      item->setText(4, ((features & VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT) != 0) ? "Y" : "");
+      item->setTextAlignment(1, Qt::AlignHCenter);
+      item->setTextAlignment(2, Qt::AlignHCenter);
+      item->setTextAlignment(3, Qt::AlignHCenter);
+      item->setTextAlignment(4, Qt::AlignHCenter);
+    }
+
+    tw->addTopLevelItem(item);
   }
 
-//  VkImageFormatProperties properties = {};
-//  VkFormat format = static_cast<VkFormat>(item->data(0, Qt::UserRole).value<uint32_t>());
-//  VkResult res = vkGetPhysicalDeviceImageFormatProperties(gpu, format, VK_IMAGE_TYPE_2D,
-//    VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, &properties);
-//  if (res != VK_SUCCESS) {
-//    return;
-//  }
-
-//  auto child = item->child(0);
-//  child->setText(5, QString::number(properties.maxMipLevels));
-//  child->setText(6, QString::number(properties.maxArrayLayers));
-//  child->setText(8, QString::number(properties.maxResourceSize));
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
 }
+
+void updateImageFormats(
+    VkPhysicalDevice    gpu,
+    QTreeWidget*        tw,
+    VkImageType         type,
+    VkImageTiling       tiling,
+    VkImageUsageFlags   usageFlags,
+    VkImageCreateFlags  createFlags
+)
+{
+  QLocale locale;
+
+  int n = tw->topLevelItemCount();
+  for (int i = 0; i < n; ++i) {
+    auto item = tw->topLevelItem(i);
+    item->setText(1, "");
+    item->setText(2, "");
+    item->setText(3, "");
+    item->setText(4, "");
+    item->setText(5, "");
+
+    VkFormat format = static_cast<VkFormat>(item->data(0, Qt::UserRole).value<uint32_t>());
+    VkImageFormatProperties imageFormatProperties = {};
+    VkResult res = vkGetPhysicalDeviceImageFormatProperties(gpu, format,
+        type, tiling, usageFlags, createFlags, &imageFormatProperties);
+    if (res != VK_SUCCESS) {
+      continue;
+    }
+
+    QString extent = locale.toString(imageFormatProperties.maxExtent.width)  + " / " +
+                     locale.toString(imageFormatProperties.maxExtent.height) + " / " +
+                     locale.toString(imageFormatProperties.maxExtent.depth);
+
+    QString bytes = locale.toString(imageFormatProperties.maxResourceSize) + " bytes";
+    QString gbytes = locale.toString(imageFormatProperties.maxResourceSize / (1024.0 * 1048576.0)) + " GB";
+
+    item->setText(1, extent);
+    item->setText(2, locale.toString(imageFormatProperties.maxMipLevels));
+    item->setText(3, locale.toString(imageFormatProperties.maxArrayLayers));
+    item->setText(4, toStringSampleCounts(imageFormatProperties.sampleCounts));
+    item->setText(5, gbytes + " (" + bytes + ")");
+
+    item->setTextAlignment(1, Qt::AlignHCenter);
+    item->setTextAlignment(2, Qt::AlignHCenter);
+    item->setTextAlignment(3, Qt::AlignHCenter);
+    item->setTextAlignment(4, Qt::AlignHCenter);
+    item->setTextAlignment(5, Qt::AlignRight);
+  }
+
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+}
+
 
 void MainWindow::populateFormats(VkPhysicalDevice gpu)
 {
+  uint32_t start = static_cast<uint32_t>(VK_FORMAT_BEGIN_RANGE) + 1;
+  uint32_t end = static_cast<uint32_t>(VK_FORMAT_END_RANGE);
+
+  // Initial values
+  VkImageType imageType = VK_IMAGE_TYPE_2D;
+  VkImageUsageFlagBits usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  VkImageCreateFlagBits createFlags = static_cast<VkImageCreateFlagBits>(0);
+
   QTreeWidget* tw = findChild<QTreeWidget*>("formatsWidget");
   Q_ASSERT(tw);
   tw->clear();
-
-  uint32_t start = static_cast<uint32_t>(VK_FORMAT_BEGIN_RANGE) + 1;
-  uint32_t end = static_cast<uint32_t>(VK_FORMAT_END_RANGE);
   for (uint32_t i = start; i <= end; ++i) {
     VkFormat format = static_cast<VkFormat>(i);
     VkFormatProperties properties = {};
     vkGetPhysicalDeviceFormatProperties(gpu, format, &properties);
 
     QTreeWidgetItem* item = new QTreeWidgetItem();
-    item->setData(0,Qt::UserRole, QVariant::fromValue(i));
+    item->setData(0, Qt::UserRole, QVariant::fromValue(i));
     item->setText(0, toStringVkFormat(format));
-    item->setText(1, (properties.linearTilingFeatures != 0) ? "Y" : " ");
-    item->setText(2, (properties.optimalTilingFeatures != 0) ? "Y" : " ");
-    item->setText(3, (properties.bufferFeatures != 0) ? "Y" : " ");
+    item->setText(1, (properties.linearTilingFeatures != 0) ? "Y" : "");
+    item->setText(2, (properties.optimalTilingFeatures != 0) ? "Y" : "");
+    item->setText(3, (properties.bufferFeatures != 0) ? "Y" : "");
+    buildFormatFeatures(item, properties);
     for (int c = 1; c < item->columnCount(); ++c) {
       item->setTextAlignment(c, Qt::AlignHCenter);
     }
-
-//    buildFormatFeatures(item, "Tiling Linear", properties.linearTilingFeatures);
-//    buildFormatFeatures(item, "Tiling Optimal", properties.optimalTilingFeatures);
-//    buildFormatFeatures(item, "Buffer", properties.bufferFeatures);
-//    updateImageFormatProperties(gpu, item);
-
     tw->addTopLevelItem(item);
   }
   for (int i = 0; i < tw->columnCount(); ++i) {
     tw->resizeColumnToContents(i);
   }
+
+  // Tiling Linear
+  tw = findChild<QTreeWidget*>("tilingLinearFormatsWidget");
+  Q_ASSERT(tw);
+  populateImageFormats(gpu, tw, VK_IMAGE_TILING_LINEAR);
+  updateImageFormats(gpu, tw, imageType, VK_IMAGE_TILING_LINEAR, usageFlags, createFlags);
+
+  // Tiling Optimal
+  tw = findChild<QTreeWidget*>("tilingOptimalFormatsWidget");
+  Q_ASSERT(tw);
+  populateImageFormats(gpu, tw, VK_IMAGE_TILING_OPTIMAL);
+  updateImageFormats(gpu, tw, imageType, VK_IMAGE_TILING_OPTIMAL, usageFlags, createFlags);
+
+  // Buffer
+  tw = findChild<QTreeWidget*>("bufferFormatsWidget");
+  Q_ASSERT(tw);
+  populateImageFormats(gpu, tw, static_cast<VkImageTiling>(UINT32_MAX));
 }
 
 void MainWindow::on_gpus_currentIndexChanged(int index)
 {
-  if (static_cast<size_t>(index) >= mVkGpus.size()) {
+  if (static_cast<size_t>(index) >= mGpus.size()) {
     return;
   }
 
-  VkPhysicalDevice gpu = mVkGpus[index];
-  populateGeneral(gpu);
-  populateLimits(gpu);
-  populateSparse(gpu);
-  populateFeatures(gpu);
-  populateSurface(gpu);
-  populateQueues(gpu);
-  populateFormats(gpu);
+  mCurrentGpu = mGpus[index];
+  populateGeneral(mCurrentGpu);
+  populateLimits(mCurrentGpu);
+  populateSparse(mCurrentGpu);
+  populateFeatures(mCurrentGpu);
+  populateSurface(mCurrentGpu);
+  populateQueues(mCurrentGpu);
+  populateMemory(mCurrentGpu);
+  populateFormats(mCurrentGpu);
 }
 
 void MainWindow::filterTreeWidgetItemsSimple(const QString &widgetName, const QString &filterText)
@@ -765,16 +948,31 @@ void MainWindow::filterTreeWidgetItemsSimple(const QString &widgetName, const QS
   Q_ASSERT(tw);
 
   if (! filterText.isEmpty()) {
-    for (int i = 0; i < tw->topLevelItemCount(); ++i) {
-      auto item = tw->topLevelItem(i);
-      auto text = item->text(0);
-      bool visible = text.contains(filterText, Qt::CaseInsensitive);
-      item->setHidden(! visible);
+    for (int parentIndex = 0; parentIndex < tw->topLevelItemCount(); ++parentIndex) {
+      auto parentItem = tw->topLevelItem(parentIndex);
+      auto parentText = parentItem->text(0);
+      bool parentVisible = parentText.contains(filterText, Qt::CaseInsensitive);
+      for (int childIndex = 0; childIndex < parentItem->childCount(); ++childIndex) {
+        auto childItem = parentItem->child(childIndex);
+        auto childText = childItem->text(0);
+        bool childVisible = childText.contains(filterText, Qt::CaseInsensitive);
+        childItem->setHidden(! childVisible);
+        if (childVisible) {
+          parentVisible = true;
+          parentItem->setExpanded(true);
+        }
+      }
+      parentItem->setHidden(! parentVisible);
     }
   }
   else {
-    for (int i = 0; i < tw->topLevelItemCount(); ++i) {
-      tw->topLevelItem(i)->setHidden(false);
+    for (int parentIndex = 0; parentIndex < tw->topLevelItemCount(); ++parentIndex) {
+      auto parentItem = tw->topLevelItem(parentIndex);
+      parentItem->setHidden(false);
+      for (int childIndex = 0; childIndex < parentItem->childCount(); ++childIndex) {
+        auto childItem = parentItem->child(childIndex);
+        childItem->setHidden(false);
+      }
     }
   }
 }
@@ -792,4 +990,67 @@ void MainWindow::on_formatFilter_textChanged(const QString &arg1)
 void MainWindow::on_featuresFilter_textChanged(const QString &arg1)
 {
   filterTreeWidgetItemsSimple("featuresWidget", arg1.trimmed());
+}
+
+void MainWindow::on_itemChanged(QStandardItem *item)
+{
+  int stopMe = 1;
+}
+
+void MainWindow::on_dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight)
+{
+  int stopMe = 1;
+}
+
+void MainWindow::on_tilingLinearImageType_currentIndexChanged(int index)
+{
+  QTreeWidget* tw = findChild<QTreeWidget*>("tilingLinearFormatsWidget");
+  VkImageType type = static_cast<VkImageType>(index);
+  VkImageTiling tiling = VK_IMAGE_TILING_LINEAR;
+  VkImageUsageFlagBits usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  VkImageCreateFlagBits createFlags = static_cast<VkImageCreateFlagBits>(0);
+  updateImageFormats(mCurrentGpu, tw, type, tiling, usageFlags, createFlags);
+}
+
+void MainWindow::on_tilingOptimalImageType_currentIndexChanged(int index)
+{
+  QTreeWidget* tw = findChild<QTreeWidget*>("tilingOptimalFormatsWidget");
+  VkImageType type = static_cast<VkImageType>(index);
+  VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
+  VkImageUsageFlagBits usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  VkImageCreateFlagBits createFlags = static_cast<VkImageCreateFlagBits>(0);
+  updateImageFormats(mCurrentGpu, tw, type, tiling, usageFlags, createFlags);
+}
+
+void MainWindow::on_tilingLinearFormatFilter_textChanged(const QString &arg1)
+{
+  filterTreeWidgetItemsSimple("tilingLinearFormatsWidget", arg1.trimmed());
+}
+
+void MainWindow::on_tilingOptimalFormatFilter_textChanged(const QString &arg1)
+{
+  filterTreeWidgetItemsSimple("tilingOptimalFormatsWidget", arg1.trimmed());
+}
+
+void MainWindow::on_bufferFormatFilter_textChanged(const QString &arg1)
+{
+  filterTreeWidgetItemsSimple("bufferFormatsWidget", arg1.trimmed());
+}
+
+void MainWindow::on_expandAllBtn_clicked()
+{
+  QTreeWidget* tw = findChild<QTreeWidget*>("formatsWidget");
+  Q_ASSERT(tw);
+  for (int i = 0; i < tw->topLevelItemCount(); ++i) {
+    tw->topLevelItem(i)->setExpanded(true);
+  }
+}
+
+void MainWindow::on_collapseAllBtn_clicked()
+{
+  QTreeWidget* tw = findChild<QTreeWidget*>("formatsWidget");
+  Q_ASSERT(tw);
+  for (int i = 0; i < tw->topLevelItemCount(); ++i) {
+    tw->topLevelItem(i)->setExpanded(false);
+  }
 }

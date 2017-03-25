@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>941</width>
-    <height>721</height>
+    <width>1006</width>
+    <height>807</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -69,7 +69,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>9</number>
         </property>
         <widget class="QWidget" name="tab_4">
          <attribute name="title">
@@ -964,118 +964,962 @@
          <attribute name="title">
           <string>Memory</string>
          </attribute>
-        </widget>
-        <widget class="QWidget" name="tab_6">
-         <attribute name="title">
-          <string>Formats</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_22">
+         <layout class="QVBoxLayout" name="verticalLayout_43">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_21">
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_3">
-              <item>
-               <widget class="QLabel" name="label_4">
-                <property name="text">
-                 <string>Filter</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="formatFilter">
-                <property name="minimumSize">
-                 <size>
-                  <width>200</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_4">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QVBoxLayout" name="verticalLayout_20">
-              <item>
-               <widget class="QTreeWidget" name="formatsWidget">
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="alternatingRowColors">
-                 <bool>true</bool>
-                </property>
-                <attribute name="headerStretchLastSection">
-                 <bool>true</bool>
-                </attribute>
-                <column>
-                 <property name="text">
-                  <string>Format</string>
+           <widget class="QGroupBox" name="groupBox_5">
+            <property name="title">
+             <string>Memory Types</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_41">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_39">
+               <item>
+                <widget class="QTreeWidget" name="memoryTypesWidget">
+                 <property name="font">
+                  <font>
+                   <pointsize>10</pointsize>
+                  </font>
                  </property>
-                </column>
-                <column>
-                 <property name="text">
-                  <string>Tiling Linear</string>
-                 </property>
-                </column>
-                <column>
-                 <property name="text">
-                  <string>Tiling Optimal</string>
-                 </property>
-                </column>
-                <column>
-                 <property name="text">
-                  <string>Buffer</string>
-                 </property>
-                </column>
-                <column>
-                 <property name="text">
-                  <string>-</string>
-                 </property>
-                 <property name="textAlignment">
-                  <set>AlignLeading|AlignVCenter</set>
-                 </property>
-                 <property name="background">
-                  <color alpha="0">
-                   <red>0</red>
-                   <green>0</green>
-                   <blue>0</blue>
-                  </color>
-                 </property>
-                 <property name="foreground">
-                  <brush brushstyle="NoBrush">
+                 <column>
+                  <property name="text">
+                   <string>Index</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Heap Index</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Device Local</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Host Visible</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Host Coherent</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Host Cached</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Lazily Allocated</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>-</string>
+                  </property>
+                  <property name="background">
                    <color alpha="0">
                     <red>0</red>
                     <green>0</green>
                     <blue>0</blue>
                    </color>
-                  </brush>
+                  </property>
+                  <property name="foreground">
+                   <brush brushstyle="NoBrush">
+                    <color alpha="0">
+                     <red>0</red>
+                     <green>0</green>
+                     <blue>0</blue>
+                    </color>
+                   </brush>
+                  </property>
+                 </column>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox_6">
+            <property name="title">
+             <string>Memory Heaps</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_42">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_40">
+               <item>
+                <widget class="QTreeWidget" name="memoryHeapsWidget">
+                 <property name="font">
+                  <font>
+                   <pointsize>10</pointsize>
+                  </font>
                  </property>
-                </column>
-               </widget>
+                 <column>
+                  <property name="text">
+                   <string>Index</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Size</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Device Local</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>-</string>
+                  </property>
+                  <property name="background">
+                   <color alpha="0">
+                    <red>0</red>
+                    <green>0</green>
+                    <blue>0</blue>
+                   </color>
+                  </property>
+                  <property name="foreground">
+                   <brush brushstyle="NoBrush">
+                    <color alpha="0">
+                     <red>0</red>
+                     <green>0</green>
+                     <blue>0</blue>
+                    </color>
+                   </brush>
+                  </property>
+                 </column>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_6">
+         <attribute name="title">
+          <string>Formats</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_35">
+          <item>
+           <widget class="QTabWidget" name="tabWidget_2">
+            <property name="currentIndex">
+             <number>2</number>
+            </property>
+            <widget class="QWidget" name="tab_11">
+             <attribute name="title">
+              <string>General</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_32">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_21">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_3">
+                  <item>
+                   <widget class="QLabel" name="label_4">
+                    <property name="text">
+                     <string>Filter</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="formatFilter">
+                    <property name="minimumSize">
+                     <size>
+                      <width>250</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>200</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="expandAllBtn">
+                    <property name="text">
+                     <string>Expand All</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="collapseAllBtn">
+                    <property name="text">
+                     <string>Collapse All</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_4">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_20">
+                  <item>
+                   <widget class="QTreeWidget" name="formatsWidget">
+                    <property name="font">
+                     <font>
+                      <pointsize>10</pointsize>
+                     </font>
+                    </property>
+                    <property name="alternatingRowColors">
+                     <bool>true</bool>
+                    </property>
+                    <attribute name="headerStretchLastSection">
+                     <bool>true</bool>
+                    </attribute>
+                    <column>
+                     <property name="text">
+                      <string>Format</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Tiling Linear</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Tiling Optimal</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Buffer</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>-</string>
+                     </property>
+                     <property name="background">
+                      <color alpha="0">
+                       <red>0</red>
+                       <green>0</green>
+                       <blue>0</blue>
+                      </color>
+                     </property>
+                     <property name="foreground">
+                      <brush brushstyle="NoBrush">
+                       <color alpha="0">
+                        <red>0</red>
+                        <green>0</green>
+                        <blue>0</blue>
+                       </color>
+                      </brush>
+                     </property>
+                    </column>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
               </item>
              </layout>
-            </item>
-           </layout>
+            </widget>
+            <widget class="QWidget" name="tab_12">
+             <attribute name="title">
+              <string>Tiling Linear</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_22">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_33">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_8">
+                  <item>
+                   <widget class="QLabel" name="label_18">
+                    <property name="text">
+                     <string>Filter</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="tilingLinearFormatFilter">
+                    <property name="minimumSize">
+                     <size>
+                      <width>250</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>200</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_19">
+                    <property name="text">
+                     <string>Image Type</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="tilingLinearImageType">
+                    <property name="currentIndex">
+                     <number>1</number>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>1D</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>2D</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>3D</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="tilingLinearImageUsage">
+                    <property name="font">
+                     <font>
+                      <pointsize>10</pointsize>
+                     </font>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>Usage Flags</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>TRANSFER_SRC</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>TRANSFER_DST</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>SAMPLED</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>STORAGE</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>COLOR_ATTACHMENT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>DEPTH_STENCIL_ATTACHMENT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>TRANSIENT_ATTACHMENT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>INPUT_ATTACHMENT</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="tilingLinearImageCreate">
+                    <property name="font">
+                     <font>
+                      <pointsize>10</pointsize>
+                     </font>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>Create Flags</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>SPARSE_BINDING</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>SPARSE_RESIDENCY</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>SPARSE_ALIASED</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>MUTABLE_FORMAT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>CUBE_COMPATIBLE</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>2D_ARRAY_COMPATIBLE</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_10">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_34">
+                  <item>
+                   <widget class="QTreeWidget" name="tilingLinearFormatsWidget">
+                    <property name="font">
+                     <font>
+                      <pointsize>10</pointsize>
+                     </font>
+                    </property>
+                    <property name="alternatingRowColors">
+                     <bool>true</bool>
+                    </property>
+                    <attribute name="headerStretchLastSection">
+                     <bool>true</bool>
+                    </attribute>
+                    <column>
+                     <property name="text">
+                      <string>Format</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Max Extents</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignCenter</set>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Max Mip Levels</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignCenter</set>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Max Array Layers</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignCenter</set>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Sample Counts</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignCenter</set>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Max Resource Size</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignTrailing|AlignVCenter</set>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>-</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignLeading|AlignVCenter</set>
+                     </property>
+                     <property name="background">
+                      <color alpha="0">
+                       <red>0</red>
+                       <green>0</green>
+                       <blue>0</blue>
+                      </color>
+                     </property>
+                     <property name="foreground">
+                      <brush brushstyle="NoBrush">
+                       <color alpha="0">
+                        <red>0</red>
+                        <green>0</green>
+                        <blue>0</blue>
+                       </color>
+                      </brush>
+                     </property>
+                    </column>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="tab_13">
+             <attribute name="title">
+              <string>Tiling Optimal</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_29">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_30">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_6">
+                  <item>
+                   <widget class="QLabel" name="label_10">
+                    <property name="text">
+                     <string>Filter</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="tilingOptimalFormatFilter">
+                    <property name="minimumSize">
+                     <size>
+                      <width>250</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>200</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_17">
+                    <property name="text">
+                     <string>Image Type</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="tilingOptimalImageType">
+                    <property name="currentIndex">
+                     <number>1</number>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>1D</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>2D</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>3D</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="tilingOptimalImageUsage">
+                    <property name="font">
+                     <font>
+                      <pointsize>10</pointsize>
+                     </font>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>Usage Flags</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>TRANSFER_SRC</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>TRANSFER_DST</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>SAMPLED</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>STORAGE</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>COLOR_ATTACHMENT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>DEPTH_STENCIL_ATTACHMENT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>TRANSIENT_ATTACHMENT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>INPUT_ATTACHMENT</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="tilingOptimalImageCreate">
+                    <property name="font">
+                     <font>
+                      <pointsize>10</pointsize>
+                     </font>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>Create Flags</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>SPARSE_BINDING</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>SPARSE_RESIDENCY</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>SPARSE_ALIASED</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>MUTABLE_FORMAT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>CUBE_COMPATIBLE</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>2D_ARRAY_COMPATIBLE</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_8">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_31">
+                  <item>
+                   <widget class="QTreeWidget" name="tilingOptimalFormatsWidget">
+                    <property name="font">
+                     <font>
+                      <pointsize>10</pointsize>
+                     </font>
+                    </property>
+                    <property name="alternatingRowColors">
+                     <bool>true</bool>
+                    </property>
+                    <attribute name="headerStretchLastSection">
+                     <bool>true</bool>
+                    </attribute>
+                    <column>
+                     <property name="text">
+                      <string>Format</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Max Extents</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignCenter</set>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Max Mip Levels</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignCenter</set>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Max Array Layers</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignCenter</set>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Sample Counts</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignCenter</set>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Max Resource Size</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignTrailing|AlignVCenter</set>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>-</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignLeading|AlignVCenter</set>
+                     </property>
+                     <property name="background">
+                      <color alpha="0">
+                       <red>0</red>
+                       <green>0</green>
+                       <blue>0</blue>
+                      </color>
+                     </property>
+                     <property name="foreground">
+                      <brush brushstyle="NoBrush">
+                       <color alpha="0">
+                        <red>0</red>
+                        <green>0</green>
+                        <blue>0</blue>
+                       </color>
+                      </brush>
+                     </property>
+                    </column>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="tab_14">
+             <attribute name="title">
+              <string>Buffer</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_38">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_36">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <item>
+                   <widget class="QLabel" name="label_16">
+                    <property name="text">
+                     <string>Filter</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="bufferFormatFilter">
+                    <property name="minimumSize">
+                     <size>
+                      <width>250</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>200</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_9">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_37">
+                  <item>
+                   <widget class="QTreeWidget" name="bufferFormatsWidget">
+                    <property name="font">
+                     <font>
+                      <pointsize>10</pointsize>
+                     </font>
+                    </property>
+                    <property name="alternatingRowColors">
+                     <bool>true</bool>
+                    </property>
+                    <attribute name="headerStretchLastSection">
+                     <bool>true</bool>
+                    </attribute>
+                    <column>
+                     <property name="text">
+                      <string>Format</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Uniform</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Storage Texel</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Storage Texel Atomic</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>Vertex</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>-</string>
+                     </property>
+                     <property name="textAlignment">
+                      <set>AlignLeading|AlignVCenter</set>
+                     </property>
+                     <property name="background">
+                      <color alpha="0">
+                       <red>0</red>
+                       <green>0</green>
+                       <blue>0</blue>
+                      </color>
+                     </property>
+                     <property name="foreground">
+                      <brush brushstyle="NoBrush">
+                       <color alpha="0">
+                        <red>0</red>
+                        <green>0</green>
+                        <blue>0</blue>
+                       </color>
+                      </brush>
+                     </property>
+                    </column>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -1090,7 +1934,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>941</width>
+     <width>1006</width>
      <height>21</height>
     </rect>
    </property>

@@ -1,7 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QComboBox>
+#include <QLineEdit>
 #include <QMainWindow>
+#include <QStandardItem>
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
@@ -13,6 +16,9 @@ namespace Ui {
 class MainWindow;
 }
 
+//! \class MainWindow
+//!
+//!
 class MainWindow : public QMainWindow {
 private:
   Q_OBJECT
@@ -21,7 +27,7 @@ public:
   using GpuProperties = std::map<VkPhysicalDevice, VkPhysicalDeviceProperties>;
 
   explicit MainWindow(QWidget *parent = 0);
-  ~MainWindow();
+  ~MainWindow();  
 
 private:
   void filterTreeWidgetItemsSimple(const QString& widgetName, const QString& filterText);
@@ -34,6 +40,23 @@ private slots:
   void on_formatFilter_textChanged(const QString &arg1);
 
   void on_featuresFilter_textChanged(const QString &arg1);
+
+  void on_itemChanged(QStandardItem* item);
+  void on_dataChanged(const QModelIndex & topLeft, const QModelIndex & bottomRight);
+
+  void on_tilingLinearImageType_currentIndexChanged(int index);
+
+  void on_tilingOptimalImageType_currentIndexChanged(int index);
+
+  void on_tilingLinearFormatFilter_textChanged(const QString &arg1);
+
+  void on_tilingOptimalFormatFilter_textChanged(const QString &arg1);
+
+  void on_bufferFormatFilter_textChanged(const QString &arg1);
+
+  void on_expandAllBtn_clicked();
+
+  void on_collapseAllBtn_clicked();
 
 private:
   void  createVulkanInstance();
@@ -57,6 +80,7 @@ private:
   void  populateFeatures(VkPhysicalDevice gpu);
   void  populateSurface(VkPhysicalDevice gpu);
   void  populateQueues(VkPhysicalDevice gpu);
+  void  populateMemory(VkPhysicalDevice gpu);
   void  populateFormats(VkPhysicalDevice gpu);
 
 private:
@@ -65,11 +89,22 @@ private:
   std::vector<VkLayerProperties>  mInstanceLayers;
   LayerExtensions                 mInstanceLayerExtensions;
 
-  VkInstance                      mVkInstance = VK_NULL_HANDLE;
-  VkSurfaceKHR                    mVkSurface = VK_NULL_HANDLE;
+  VkInstance                      mInstance = VK_NULL_HANDLE;
+  VkSurfaceKHR                    mSurface = VK_NULL_HANDLE;
 
-  std::vector<VkPhysicalDevice>   mVkGpus;
-  GpuProperties                   mVkGpuProperties;
+  std::vector<VkPhysicalDevice>   mGpus;
+  VkPhysicalDevice                mCurrentGpu = VK_NULL_HANDLE;
+  GpuProperties                   mGpuProperties;
+
+  struct FilterInputs {
+    QLineEdit*  formatFilter = nullptr;
+    QComboBox*  imageTypeFilter = nullptr;
+    QComboBox*  usageFlagsFilter = nullptr;
+    QComboBox*  createFlagsFilter = nullptr;
+  };
+
+  FilterInputs  mTilingLinearFilterInputs = {};
+  FilterInputs  mTilingOptimalFilterInputs = {};
 };
 
 #endif // MAINWINDOW_H

@@ -254,6 +254,29 @@ QString toStringVkPresentMode(VkPresentModeKHR mode)
   return result;
 }
 
+QString toStringFormatFeature(VkFormatFeatureFlagBits value)
+{
+  QString result;
+  switch (value) {
+    case VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT               : result = "VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT"; break;
+    case VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT               : result = "VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT"; break;
+    case VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT        : result = "VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT"; break;
+    case VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT        : result = "VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT"; break;
+    case VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT        : result = "VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT"; break;
+    case VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT : result = "VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT"; break;
+    case VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT               : result = "VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT"; break;
+    case VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT            : result = "VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT"; break;
+    case VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT      : result = "VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT"; break;
+    case VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT    : result = "VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT"; break;
+    case VK_FORMAT_FEATURE_BLIT_SRC_BIT                    : result = "VK_FORMAT_FEATURE_BLIT_SRC_BIT"; break;
+    case VK_FORMAT_FEATURE_BLIT_DST_BIT                    : result = "VK_FORMAT_FEATURE_BLIT_DST_BIT"; break;
+    case VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT : result = "VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT"; break;
+    case VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR            : result = "VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR"; break;
+    case VK_FORMAT_FEATURE_TRANSFER_DST_BIT_KHR            : result = "VK_FORMAT_FEATURE_TRANSFER_DST_BIT_KHR"; break;
+  }
+  return result;
+}
+
 QString toStringFormatFeatureShort(VkFormatFeatureFlagBits value)
 {
   QString result;
@@ -276,3 +299,71 @@ QString toStringFormatFeatureShort(VkFormatFeatureFlagBits value)
   }
   return result;
 }
+
+QString toStringImageTypeShort(VkImageType value)
+{
+  QString result;
+  switch (value) {
+    case VK_IMAGE_TYPE_1D : result = "1D"; break;
+    case VK_IMAGE_TYPE_2D : result = "2D"; break;
+    case VK_IMAGE_TYPE_3D : result = "3D"; break;
+  }
+  return result;
+}
+
+QString toStringImageUsageFlagShort(VkImageUsageFlagBits value)
+{
+  QString result;
+  switch (value) {
+    case VK_IMAGE_USAGE_TRANSFER_SRC_BIT             : result = "TRANSFER_SRC"; break;
+    case VK_IMAGE_USAGE_TRANSFER_DST_BIT             : result = "TRANSFER_DST"; break;
+    case VK_IMAGE_USAGE_SAMPLED_BIT                  : result = "SAMPLED"; break;
+    case VK_IMAGE_USAGE_STORAGE_BIT                  : result = "STORAGE"; break;
+    case VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT         : result = "COLOR_ATTACHMENT"; break;
+    case VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : result = "DEPTH_STENCIL_ATTACHMENT"; break;
+    case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT     : result = "TRANSIENT_ATTACHMENT"; break;
+    case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT         : result = "INPUT_ATTACHMENT"; break;
+  }
+  return result;
+}
+
+QString toStringSampleCounts(VkSampleCountFlags value)
+{
+  QString result;
+  bool append = false;
+  if (value & VK_SAMPLE_COUNT_1_BIT) {
+    result += "1";
+    append = true;
+  }
+  if (value & VK_SAMPLE_COUNT_2_BIT) {
+    result += append ? " / " : "";
+    result += "2";
+    append = true;
+  }
+  if (value & VK_SAMPLE_COUNT_4_BIT) {
+    result += append ? " / " : "";
+    result += "4";
+    append = true;
+  }
+  if (value & VK_SAMPLE_COUNT_8_BIT) {
+    result += append ? " / " : "";
+    result += "8";
+    append = true;
+  }
+  if (value & VK_SAMPLE_COUNT_16_BIT) {
+    result += append ? " / " : "";
+    result += "16";
+    append = true;
+  }
+  if (value & VK_SAMPLE_COUNT_32_BIT) {
+    result += append ? " / " : "";
+    result += "32";
+    append = true;
+  }
+  if (value & VK_SAMPLE_COUNT_64_BIT) {
+    result += append ? " / " : "";
+    result += "64";
+  }
+  return result;
+}
+
