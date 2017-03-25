@@ -1,8 +1,31 @@
 #include "ToString.h"
 
 #include <map>
+#include <sstream>
 
 static std::map<VkFormat, QString> sFormatStrings;
+
+QString toStringVersion(uint32_t version)
+{
+  std::stringstream ss;
+  ss << ((version >> 22) & 0x3FF) << ".";
+  ss << ((version >> 12) & 0x3FF) << ".";
+  ss << ((version >>  0) & 0xFFF);
+  return QString::fromStdString(ss.str());
+}
+
+QString toStringDeviceType(VkPhysicalDeviceType type)
+{
+  QString result;
+  switch (type) {
+    case VK_PHYSICAL_DEVICE_TYPE_OTHER          : result = "VK_PHYSICAL_DEVICE_TYPE_OTHER"; break;
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU : result = "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU"; break;
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU   : result = "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU"; break;
+    case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU    : result = "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU"; break;
+    case VK_PHYSICAL_DEVICE_TYPE_CPU            : result = "VK_PHYSICAL_DEVICE_TYPE_CPU"; break;
+  }
+  return result;
+}
 
 QString toStringVkFormat(VkFormat format)
 {

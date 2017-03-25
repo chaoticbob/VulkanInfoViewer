@@ -5,6 +5,8 @@
 
 #include <vulkan/vulkan.h>
 
+QString toStringVersion(uint32_t version);
+QString toStringDeviceType(VkPhysicalDeviceType type);
 QString toStringVkFormat(VkFormat format);
 QString toStringVkColorSpace(VkColorSpaceKHR colorSpace);
 QString toStringVkPresentMode(VkPresentModeKHR mode);

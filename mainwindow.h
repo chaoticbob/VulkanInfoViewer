@@ -23,12 +23,17 @@ public:
   explicit MainWindow(QWidget *parent = 0);
   ~MainWindow();
 
+private:
+  void filterTreeWidgetItemsSimple(const QString& widgetName, const QString& filterText);
+
 private slots:
   void on_gpus_currentIndexChanged(int index);
 
   void on_limitsFilter_textChanged(const QString &arg1);
 
   void on_formatFilter_textChanged(const QString &arg1);
+
+  void on_featuresFilter_textChanged(const QString &arg1);
 
 private:
   void  createVulkanInstance();
@@ -46,7 +51,10 @@ private:
   void  enumerateGpus();
   void  populateGpus();
 
+  void  populateGeneral(VkPhysicalDevice gpu);
   void  populateLimits(VkPhysicalDevice gpu);
+  void  populateSparse(VkPhysicalDevice gpu);
+  void  populateFeatures(VkPhysicalDevice gpu);
   void  populateSurface(VkPhysicalDevice gpu);
   void  populateQueues(VkPhysicalDevice gpu);
   void  populateFormats(VkPhysicalDevice gpu);

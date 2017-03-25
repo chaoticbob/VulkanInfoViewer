@@ -100,14 +100,9 @@ void MainWindow::populateInstanceLayers()
   tw->clear();
 
   for (const auto& layer : mInstanceLayers) {
-    std::stringstream ss;
-    ss << ((layer.specVersion >> 22) & 0x3FF) << ".";
-    ss << ((layer.specVersion >> 12) & 0x3FF) << ".";
-    ss << ((layer.specVersion >>  0) & 0xFFF);
-
     QTreeWidgetItem* item = new QTreeWidgetItem();
     item->setText(0, QString::fromUtf8(layer.layerName));
-    item->setText(1, QString::fromStdString(ss.str()));
+    item->setText(1, toStringVersion(layer.specVersion));
     item->setText(2, QString::number(layer.implementationVersion));
     item->setText(3, QString::fromUtf8(layer.description));
     tw->addTopLevelItem(item);
@@ -226,6 +221,48 @@ void MainWindow::populateGpus()
   }
 }
 
+void MainWindow::populateGeneral(VkPhysicalDevice gpu)
+{
+  auto it = mVkGpuProperties.find(gpu);
+  if (it == mVkGpuProperties.end()) {
+    return;
+  }
+
+  const VkPhysicalDeviceProperties& properties = it->second;
+
+  QLabel* lb = findChild<QLabel*>("apiVersionValue");
+  Q_ASSERT(lb);
+  lb->setText(toStringVersion(properties.apiVersion));
+
+  lb = findChild<QLabel*>("driverVersionValue");
+  Q_ASSERT(lb);
+  lb->setText(QString::number(properties.driverVersion));
+
+  lb = findChild<QLabel*>("vendorIdValue");
+  Q_ASSERT(lb);
+  lb->setText(QString::number(properties.vendorID));
+
+  lb = findChild<QLabel*>("deviceIdValue");
+  Q_ASSERT(lb);
+  lb->setText(QString::number(properties.deviceID));
+
+  lb = findChild<QLabel*>("deviceTypeValue");
+  Q_ASSERT(lb);
+  lb->setText(toStringDeviceType(properties.deviceType));
+
+  lb = findChild<QLabel*>("deviceNameValue");
+  Q_ASSERT(lb);
+  lb->setText(properties.deviceName);
+
+  QString uuid;
+  for (size_t i = 0; i < VK_UUID_SIZE; ++i) {
+    uuid.append(QString::number(properties.pipelineCacheUUID[i], 16));
+  }
+  lb = findChild<QLabel*>("pipelineCacheUuidValue");
+  Q_ASSERT(lb);
+  lb->setText(uuid.toUpper());
+}
+
 #define ADD_LIMIT(tw, limits, prop)                 \
   {                                                 \
     QTreeWidgetItem* item = new QTreeWidgetItem();  \
@@ -243,11 +280,11 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
 
   tw->clear();
 
-  if (mVkGpuProperties.find(gpu) == mVkGpuProperties.end()) {
+  auto it = mVkGpuProperties.find(gpu);
+  if (it == mVkGpuProperties.end()) {
     return;
   }
-
-  const auto &limits = mVkGpuProperties[gpu].limits;
+  const auto &limits = it->second.limits;
 
   ADD_LIMIT(tw, limits, maxImageDimension1D);
   ADD_LIMIT(tw, limits, maxImageDimension2D);
@@ -301,9 +338,13 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
   ADD_LIMIT(tw, limits, maxFragmentDualSrcAttachments);
   ADD_LIMIT(tw, limits, maxFragmentCombinedOutputResources);
   ADD_LIMIT(tw, limits, maxComputeSharedMemorySize);
-  ADD_LIMIT(tw, limits, maxComputeWorkGroupCount[3]);
+  ADD_LIMIT(tw, limits, maxComputeWorkGroupCount[0]);
+  ADD_LIMIT(tw, limits, maxComputeWorkGroupCount[1]);
+  ADD_LIMIT(tw, limits, maxComputeWorkGroupCount[2]);
   ADD_LIMIT(tw, limits, maxComputeWorkGroupInvocations);
-  ADD_LIMIT(tw, limits, maxComputeWorkGroupSize[3]);
+  ADD_LIMIT(tw, limits, maxComputeWorkGroupSize[0]);
+  ADD_LIMIT(tw, limits, maxComputeWorkGroupSize[1]);
+  ADD_LIMIT(tw, limits, maxComputeWorkGroupSize[2]);
   ADD_LIMIT(tw, limits, subPixelPrecisionBits);
   ADD_LIMIT(tw, limits, subTexelPrecisionBits);
   ADD_LIMIT(tw, limits, mipmapPrecisionBits);
@@ -312,8 +353,10 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
   ADD_LIMIT(tw, limits, maxSamplerLodBias);
   ADD_LIMIT(tw, limits, maxSamplerAnisotropy);
   ADD_LIMIT(tw, limits, maxViewports);
-  ADD_LIMIT(tw, limits, maxViewportDimensions[2]);
-  ADD_LIMIT(tw, limits, viewportBoundsRange[2]);
+  ADD_LIMIT(tw, limits, maxViewportDimensions[0]);
+  ADD_LIMIT(tw, limits, maxViewportDimensions[1]);
+  ADD_LIMIT(tw, limits, viewportBoundsRange[0]);
+  ADD_LIMIT(tw, limits, viewportBoundsRange[1]);
   ADD_LIMIT(tw, limits, viewportSubPixelBits);
   ADD_LIMIT(tw, limits, minMemoryMapAlignment);
   ADD_LIMIT(tw, limits, minTexelBufferOffsetAlignment);
@@ -357,6 +400,124 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
   ADD_LIMIT(tw, limits, optimalBufferCopyOffsetAlignment);
   ADD_LIMIT(tw, limits, optimalBufferCopyRowPitchAlignment);
   ADD_LIMIT(tw, limits, nonCoherentAtomSize);
+
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+}
+
+#define ADD_SPARSE(tw, sparse, prop)                          \
+  {                                                           \
+    QTreeWidgetItem* item = new QTreeWidgetItem();            \
+    item->setText(0, QString::fromUtf8(#prop));               \
+    item->setText(1, (sparse.prop == VK_TRUE) ? "Y" : " "); \
+    item->setTextAlignment(1, Qt::AlignHCenter);              \
+    tw->addTopLevelItem(item);                                \
+  }
+
+void MainWindow::populateSparse(VkPhysicalDevice gpu)
+{
+  assert(gpu != VK_NULL_HANDLE);
+
+  QTreeWidget* tw = findChild<QTreeWidget*>("sparsePropertiesWidget");
+  Q_ASSERT(tw);
+
+  tw->clear();
+
+  auto it = mVkGpuProperties.find(gpu);
+  if (it == mVkGpuProperties.end()) {
+    return;
+  }
+
+  const auto &sparseProperties = it->second.sparseProperties;
+
+  ADD_SPARSE(tw, sparseProperties, residencyStandard2DBlockShape);
+  ADD_SPARSE(tw, sparseProperties, residencyStandard2DMultisampleBlockShape);
+  ADD_SPARSE(tw, sparseProperties, residencyStandard3DBlockShape);
+  ADD_SPARSE(tw, sparseProperties, residencyAlignedMipSize);
+  ADD_SPARSE(tw, sparseProperties, residencyNonResidentStrict);
+
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+}
+
+#define ADD_FEATURE(tw, features, prop)                       \
+  {                                                           \
+    QTreeWidgetItem* item = new QTreeWidgetItem();            \
+    item->setText(0, QString::fromUtf8(#prop));               \
+    item->setText(1, (features.prop == VK_TRUE) ? "Y" : " "); \
+    item->setTextAlignment(1, Qt::AlignHCenter);              \
+    tw->addTopLevelItem(item);                                \
+  }
+
+void MainWindow::populateFeatures(VkPhysicalDevice gpu)
+{
+  assert(gpu != VK_NULL_HANDLE);
+
+  QTreeWidget* tw = findChild<QTreeWidget*>("featuresWidget");
+  Q_ASSERT(tw);
+
+  tw->clear();
+
+  VkPhysicalDeviceFeatures features = {};
+  vkGetPhysicalDeviceFeatures(gpu, &features);
+
+  ADD_FEATURE(tw, features, robustBufferAccess);
+  ADD_FEATURE(tw, features, fullDrawIndexUint32);
+  ADD_FEATURE(tw, features, imageCubeArray);
+  ADD_FEATURE(tw, features, independentBlend);
+  ADD_FEATURE(tw, features, geometryShader);
+  ADD_FEATURE(tw, features, tessellationShader);
+  ADD_FEATURE(tw, features, sampleRateShading);
+  ADD_FEATURE(tw, features, dualSrcBlend);
+  ADD_FEATURE(tw, features, logicOp);
+  ADD_FEATURE(tw, features, multiDrawIndirect);
+  ADD_FEATURE(tw, features, drawIndirectFirstInstance);
+  ADD_FEATURE(tw, features, depthClamp);
+  ADD_FEATURE(tw, features, depthBiasClamp);
+  ADD_FEATURE(tw, features, fillModeNonSolid);
+  ADD_FEATURE(tw, features, depthBounds);
+  ADD_FEATURE(tw, features, wideLines);
+  ADD_FEATURE(tw, features, largePoints);
+  ADD_FEATURE(tw, features, alphaToOne);
+  ADD_FEATURE(tw, features, multiViewport);
+  ADD_FEATURE(tw, features, samplerAnisotropy);
+  ADD_FEATURE(tw, features, textureCompressionETC2);
+  ADD_FEATURE(tw, features, textureCompressionASTC_LDR);
+  ADD_FEATURE(tw, features, textureCompressionBC);
+  ADD_FEATURE(tw, features, occlusionQueryPrecise);
+  ADD_FEATURE(tw, features, pipelineStatisticsQuery);
+  ADD_FEATURE(tw, features, vertexPipelineStoresAndAtomics);
+  ADD_FEATURE(tw, features, fragmentStoresAndAtomics);
+  ADD_FEATURE(tw, features, shaderTessellationAndGeometryPointSize);
+  ADD_FEATURE(tw, features, shaderImageGatherExtended);
+  ADD_FEATURE(tw, features, shaderStorageImageExtendedFormats);
+  ADD_FEATURE(tw, features, shaderStorageImageMultisample);
+  ADD_FEATURE(tw, features, shaderStorageImageReadWithoutFormat);
+  ADD_FEATURE(tw, features, shaderStorageImageWriteWithoutFormat);
+  ADD_FEATURE(tw, features, shaderUniformBufferArrayDynamicIndexing);
+  ADD_FEATURE(tw, features, shaderSampledImageArrayDynamicIndexing);
+  ADD_FEATURE(tw, features, shaderStorageBufferArrayDynamicIndexing);
+  ADD_FEATURE(tw, features, shaderStorageImageArrayDynamicIndexing);
+  ADD_FEATURE(tw, features, shaderClipDistance);
+  ADD_FEATURE(tw, features, shaderCullDistance);
+  ADD_FEATURE(tw, features, shaderFloat64);
+  ADD_FEATURE(tw, features, shaderInt64);
+  ADD_FEATURE(tw, features, shaderInt16);
+  ADD_FEATURE(tw, features, shaderResourceResidency);
+  ADD_FEATURE(tw, features, shaderResourceMinLod);
+  ADD_FEATURE(tw, features, sparseBinding);
+  ADD_FEATURE(tw, features, sparseResidencyBuffer);
+  ADD_FEATURE(tw, features, sparseResidencyImage2D);
+  ADD_FEATURE(tw, features, sparseResidencyImage3D);
+  ADD_FEATURE(tw, features, sparseResidency2Samples);
+  ADD_FEATURE(tw, features, sparseResidency4Samples);
+  ADD_FEATURE(tw, features, sparseResidency8Samples);
+  ADD_FEATURE(tw, features, sparseResidency16Samples);
+  ADD_FEATURE(tw, features, sparseResidencyAliased);
+  ADD_FEATURE(tw, features, variableMultisampleRate);
+  ADD_FEATURE(tw, features, inheritedQueries);
 
   for (int i = 0; i < tw->columnCount(); ++i) {
     tw->resizeColumnToContents(i);
@@ -423,6 +584,7 @@ void MainWindow::populateQueues(VkPhysicalDevice gpu)
   for (size_t i = 0; i < properties.size(); ++i) {
     VkBool32 presents = VK_FALSE;
     VkResult res = vkGetPhysicalDeviceSurfaceSupportKHR(gpu, static_cast<uint32_t>(i), mVkSurface, &presents);
+    assert(res == VK_SUCCESS);
 
     QTreeWidgetItem* item = new QTreeWidgetItem();
     item->setText(0, QString::number(i));
@@ -478,18 +640,20 @@ void MainWindow::on_gpus_currentIndexChanged(int index)
   }
 
   VkPhysicalDevice gpu = mVkGpus[index];
+  populateGeneral(gpu);
   populateLimits(gpu);
+  populateSparse(gpu);
+  populateFeatures(gpu);
   populateSurface(gpu);
   populateQueues(gpu);
   populateFormats(gpu);
 }
 
-void MainWindow::on_limitsFilter_textChanged(const QString &arg1)
+void MainWindow::filterTreeWidgetItemsSimple(const QString &widgetName, const QString &filterText)
 {
-  QTreeWidget* tw = findChild<QTreeWidget*>("limitsWidget");
+  QTreeWidget* tw = findChild<QTreeWidget*>(widgetName);
   Q_ASSERT(tw);
 
-  QString filterText = arg1;
   if (! filterText.isEmpty()) {
     for (int i = 0; i < tw->topLevelItemCount(); ++i) {
       auto item = tw->topLevelItem(i);
@@ -505,23 +669,17 @@ void MainWindow::on_limitsFilter_textChanged(const QString &arg1)
   }
 }
 
+void MainWindow::on_limitsFilter_textChanged(const QString &arg1)
+{
+  filterTreeWidgetItemsSimple("limitsWidget", arg1.trimmed());
+}
+
 void MainWindow::on_formatFilter_textChanged(const QString &arg1)
 {
-  QTreeWidget* tw = findChild<QTreeWidget*>("formatsWidget");
-  Q_ASSERT(tw);
+  filterTreeWidgetItemsSimple("formatsWidget", arg1.trimmed());
+}
 
-  QString filterText = arg1;
-  if (! filterText.isEmpty()) {
-    for (int i = 0; i < tw->topLevelItemCount(); ++i) {
-      auto item = tw->topLevelItem(i);
-      auto text = item->text(0);
-      bool visible = text.contains(filterText, Qt::CaseInsensitive);
-      item->setHidden(! visible);
-    }
-  }
-  else {
-    for (int i = 0; i < tw->topLevelItemCount(); ++i) {
-      tw->topLevelItem(i)->setHidden(false);
-    }
-  }
+void MainWindow::on_featuresFilter_textChanged(const QString &arg1)
+{
+  filterTreeWidgetItemsSimple("featuresWidget", arg1.trimmed());
 }
