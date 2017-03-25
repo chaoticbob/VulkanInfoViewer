@@ -772,7 +772,7 @@ void populateImageFormats(
   VkImageTiling     tiling
 )
 {
-  uint32_t start = static_cast<uint32_t>(VK_FORMAT_BEGIN_RANGE) + 1;
+  uint32_t start = static_cast<uint32_t>(VK_FORMAT_BEGIN_RANGE);
   uint32_t end = static_cast<uint32_t>(VK_FORMAT_END_RANGE);
 
   tw->clear();
@@ -875,7 +875,7 @@ void updateImageFormats(
 
 void MainWindow::populateFormats(VkPhysicalDevice gpu)
 {
-  uint32_t start = static_cast<uint32_t>(VK_FORMAT_BEGIN_RANGE) + 1;
+  uint32_t start = static_cast<uint32_t>(VK_FORMAT_BEGIN_RANGE);
   uint32_t end = static_cast<uint32_t>(VK_FORMAT_END_RANGE);
 
   // Initial values
