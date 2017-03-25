@@ -253,3 +253,26 @@ QString toStringVkPresentMode(VkPresentModeKHR mode)
   }
   return result;
 }
+
+QString toStringFormatFeatureShort(VkFormatFeatureFlagBits value)
+{
+  QString result;
+  switch (value) {
+    case VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT               : result = "SAMPLED_IMAGE"; break;
+    case VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT               : result = "STORAGE_IMAGE"; break;
+    case VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT        : result = "STORAGE_IMAGE_ATOMIC"; break;
+    case VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT        : result = "UNIFORM_TEXEL_BUFFER"; break;
+    case VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT        : result = "STORAGE_TEXEL_BUFFER"; break;
+    case VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT : result = "STORAGE_TEXEL_BUFFER_ATOMIC"; break;
+    case VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT               : result = "VERTEX_BUFFER"; break;
+    case VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT            : result = "COLOR_ATTACHMENT"; break;
+    case VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT      : result = "COLOR_ATTACHMENT_BLEND"; break;
+    case VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT    : result = "DEPTH_STENCIL_ATTACHMENT"; break;
+    case VK_FORMAT_FEATURE_BLIT_SRC_BIT                    : result = "BLIT_SRC"; break;
+    case VK_FORMAT_FEATURE_BLIT_DST_BIT                    : result = "BLIT_DST"; break;
+    case VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT : result = "SAMPLED_IMAGE_FILTER_LINEAR"; break;
+    case VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR            : result = "TRANSFER_SRC"; break;
+    case VK_FORMAT_FEATURE_TRANSFER_DST_BIT_KHR            : result = "TRANSFER_DST"; break;
+  }
+  return result;
+}

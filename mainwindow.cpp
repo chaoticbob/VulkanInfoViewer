@@ -411,7 +411,6 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
     QTreeWidgetItem* item = new QTreeWidgetItem();            \
     item->setText(0, QString::fromUtf8(#prop));               \
     item->setText(1, (sparse.prop == VK_TRUE) ? "Y" : " "); \
-    item->setTextAlignment(1, Qt::AlignHCenter);              \
     tw->addTopLevelItem(item);                                \
   }
 
@@ -447,7 +446,6 @@ void MainWindow::populateSparse(VkPhysicalDevice gpu)
     QTreeWidgetItem* item = new QTreeWidgetItem();            \
     item->setText(0, QString::fromUtf8(#prop));               \
     item->setText(1, (features.prop == VK_TRUE) ? "Y" : " "); \
-    item->setTextAlignment(1, Qt::AlignHCenter);              \
     tw->addTopLevelItem(item);                                \
   }
 
@@ -556,6 +554,9 @@ void MainWindow::populateSurface(VkPhysicalDevice gpu)
     item->setText(0, toStringVkPresentMode(mode));
     tw->addTopLevelItem(item);
   }
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
 
   tw = findChild<QTreeWidget*>("surfaceFormatsWidget");
   Q_ASSERT(tw);
@@ -605,6 +606,108 @@ void MainWindow::populateQueues(VkPhysicalDevice gpu)
   }
 }
 
+QTreeWidgetItem* buildFormatFeatures(QTreeWidgetItem* parentItem, const QString& featureName, VkFormatFeatureFlags features)
+{
+  if (features == 0) {
+    return nullptr;
+  }
+
+  std::vector<VkFormatFeatureFlagBits> flags = {
+    VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT,
+    VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT,
+    VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT,
+    VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT,
+    VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT,
+    VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT,
+    VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT,
+    VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT,
+    VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT,
+    VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT,
+    VK_FORMAT_FEATURE_BLIT_SRC_BIT,
+    VK_FORMAT_FEATURE_BLIT_DST_BIT,
+    VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT,
+    VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR,
+    VK_FORMAT_FEATURE_TRANSFER_DST_BIT_KHR,
+  };
+
+  QTreeWidgetItem* featureItem = new QTreeWidgetItem();
+  featureItem->setText(0, featureName);
+  parentItem->addChild(featureItem);
+
+  for (const auto& flag : flags) {
+    if ((features & flag) == 0) {
+      continue;
+    }
+
+    QTreeWidgetItem* item = new QTreeWidgetItem();
+    item->setText(0, toStringFormatFeatureShort(flag));
+    featureItem->addChild(item);
+  }
+
+  return nullptr;
+}
+
+void updateImageFormatProperties(
+    VkPhysicalDevice   gpu,
+    QTreeWidgetItem*   item,
+    VkFormat           format,
+    VkImageType        imageType,
+    VkImageTiling      tiling,
+    VkImageUsageFlags  usageFlags,
+    VkImageCreateFlags createFlags
+)
+{
+  VkImageFormatProperties properties = {};
+  VkResult res = vkGetPhysicalDeviceImageFormatProperties(gpu, format, imageType,
+      tiling, usageFlags, createFlags, &properties);
+  if (res != VK_SUCCESS) {
+    return;
+  }
+
+  item->setText(5, QString::number(properties.maxMipLevels));
+  item->setText(6, QString::number(properties.maxArrayLayers));
+  item->setText(8, QString::number(properties.maxResourceSize));
+
+  item->setTextAlignment(5, Qt::AlignHCenter);
+  item->setTextAlignment(6, Qt::AlignHCenter);
+  item->setTextAlignment(8, Qt::AlignHCenter);
+}
+
+void updateImageFormatProperties(VkPhysicalDevice gpu, QTreeWidgetItem* item)
+{
+  if ((item == nullptr) || (item->childCount() == 0)) {
+    return;
+  }
+
+  VkFormat format = static_cast<VkFormat>(item->data(0, Qt::UserRole).value<uint32_t>());
+  if (format == VK_FORMAT_UNDEFINED) {
+    return;
+  }
+
+  for (int i = 0; i < item->childCount(); ++i) {
+    auto childItem = item->child(i);
+    QString childLabel = childItem->text(0);
+    if (childLabel == "Buffer") {
+      continue;
+    }
+    VkImageTiling tiling = (childLabel == "Tiling Optimal") ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR;
+    updateImageFormatProperties(gpu, childItem, format, VK_IMAGE_TYPE_2D, tiling, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0);
+  }
+
+//  VkImageFormatProperties properties = {};
+//  VkFormat format = static_cast<VkFormat>(item->data(0, Qt::UserRole).value<uint32_t>());
+//  VkResult res = vkGetPhysicalDeviceImageFormatProperties(gpu, format, VK_IMAGE_TYPE_2D,
+//    VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, &properties);
+//  if (res != VK_SUCCESS) {
+//    return;
+//  }
+
+//  auto child = item->child(0);
+//  child->setText(5, QString::number(properties.maxMipLevels));
+//  child->setText(6, QString::number(properties.maxArrayLayers));
+//  child->setText(8, QString::number(properties.maxResourceSize));
+}
+
 void MainWindow::populateFormats(VkPhysicalDevice gpu)
 {
   QTreeWidget* tw = findChild<QTreeWidget*>("formatsWidget");
@@ -619,6 +722,7 @@ void MainWindow::populateFormats(VkPhysicalDevice gpu)
     vkGetPhysicalDeviceFormatProperties(gpu, format, &properties);
 
     QTreeWidgetItem* item = new QTreeWidgetItem();
+    item->setData(0,Qt::UserRole, QVariant::fromValue(i));
     item->setText(0, toStringVkFormat(format));
     item->setText(1, (properties.linearTilingFeatures != 0) ? "Y" : " ");
     item->setText(2, (properties.optimalTilingFeatures != 0) ? "Y" : " ");
@@ -626,6 +730,12 @@ void MainWindow::populateFormats(VkPhysicalDevice gpu)
     for (int c = 1; c < item->columnCount(); ++c) {
       item->setTextAlignment(c, Qt::AlignHCenter);
     }
+
+//    buildFormatFeatures(item, "Tiling Linear", properties.linearTilingFeatures);
+//    buildFormatFeatures(item, "Tiling Optimal", properties.optimalTilingFeatures);
+//    buildFormatFeatures(item, "Buffer", properties.bufferFeatures);
+//    updateImageFormatProperties(gpu, item);
+
     tw->addTopLevelItem(item);
   }
   for (int i = 0; i < tw->columnCount(); ++i) {

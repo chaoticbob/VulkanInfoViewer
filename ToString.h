@@ -10,5 +10,6 @@ QString toStringDeviceType(VkPhysicalDeviceType type);
 QString toStringVkFormat(VkFormat format);
 QString toStringVkColorSpace(VkColorSpaceKHR colorSpace);
 QString toStringVkPresentMode(VkPresentModeKHR mode);
+QString toStringFormatFeatureShort(VkFormatFeatureFlagBits value);
 
 #endif // __TO_STRING_H__

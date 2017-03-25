@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>854</width>
-    <height>686</height>
+    <width>941</width>
+    <height>721</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -63,6 +63,11 @@
       </item>
       <item>
        <widget class="QTabWidget" name="tabWidget">
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
         <property name="currentIndex">
          <number>0</number>
         </property>
@@ -298,12 +303,33 @@
                 <string>Implementation Version</string>
                </property>
                <property name="textAlignment">
-                <set>AlignCenter</set>
+                <set>AlignLeading|AlignVCenter</set>
                </property>
               </column>
               <column>
                <property name="text">
                 <string>Description</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>-</string>
+               </property>
+               <property name="background">
+                <color alpha="0">
+                 <red>0</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </property>
+               <property name="foreground">
+                <brush brushstyle="NoBrush">
+                 <color alpha="0">
+                  <red>0</red>
+                  <green>0</green>
+                  <blue>0</blue>
+                 </color>
+                </brush>
                </property>
               </column>
              </widget>
@@ -329,6 +355,9 @@
               <property name="alternatingRowColors">
                <bool>true</bool>
               </property>
+              <attribute name="headerStretchLastSection">
+               <bool>true</bool>
+              </attribute>
               <column>
                <property name="text">
                 <string>Extension</string>
@@ -337,6 +366,27 @@
               <column>
                <property name="text">
                 <string>Spec Version</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>-</string>
+               </property>
+               <property name="background">
+                <color alpha="0">
+                 <red>0</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </property>
+               <property name="foreground">
+                <brush brushstyle="NoBrush">
+                 <color alpha="0">
+                  <red>0</red>
+                  <green>0</green>
+                  <blue>0</blue>
+                 </color>
+                </brush>
                </property>
               </column>
              </widget>
@@ -398,6 +448,9 @@
                 <property name="alternatingRowColors">
                  <bool>true</bool>
                 </property>
+                <attribute name="headerStretchLastSection">
+                 <bool>true</bool>
+                </attribute>
                 <column>
                  <property name="text">
                   <string>Property</string>
@@ -406,6 +459,27 @@
                 <column>
                  <property name="text">
                   <string>Value</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>-</string>
+                 </property>
+                 <property name="background">
+                  <color alpha="0">
+                   <red>0</red>
+                   <green>0</green>
+                   <blue>0</blue>
+                  </color>
+                 </property>
+                 <property name="foreground">
+                  <brush brushstyle="NoBrush">
+                   <color alpha="0">
+                    <red>0</red>
+                    <green>0</green>
+                    <blue>0</blue>
+                   </color>
+                  </brush>
                  </property>
                 </column>
                </widget>
@@ -433,6 +507,9 @@
               <property name="alternatingRowColors">
                <bool>true</bool>
               </property>
+              <attribute name="headerStretchLastSection">
+               <bool>true</bool>
+              </attribute>
               <column>
                <property name="text">
                 <string>Property</string>
@@ -441,6 +518,27 @@
               <column>
                <property name="text">
                 <string>Present</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>-</string>
+               </property>
+               <property name="background">
+                <color alpha="0">
+                 <red>0</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </property>
+               <property name="foreground">
+                <brush brushstyle="NoBrush">
+                 <color alpha="0">
+                  <red>0</red>
+                  <green>0</green>
+                  <blue>0</blue>
+                 </color>
+                </brush>
                </property>
               </column>
              </widget>
@@ -502,6 +600,9 @@
                 <property name="alternatingRowColors">
                  <bool>true</bool>
                 </property>
+                <attribute name="headerStretchLastSection">
+                 <bool>true</bool>
+                </attribute>
                 <column>
                  <property name="text">
                   <string>Feature</string>
@@ -510,6 +611,27 @@
                 <column>
                  <property name="text">
                   <string>Present</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>-</string>
+                 </property>
+                 <property name="background">
+                  <color alpha="0">
+                   <red>0</red>
+                   <green>0</green>
+                   <blue>0</blue>
+                  </color>
+                 </property>
+                 <property name="foreground">
+                  <brush brushstyle="NoBrush">
+                   <color alpha="0">
+                    <red>0</red>
+                    <green>0</green>
+                    <blue>0</blue>
+                   </color>
+                  </brush>
                  </property>
                 </column>
                </widget>
@@ -625,9 +747,33 @@
                    <property name="alternatingRowColors">
                     <bool>true</bool>
                    </property>
+                   <attribute name="headerStretchLastSection">
+                    <bool>true</bool>
+                   </attribute>
                    <column>
                     <property name="text">
                      <string>Mode</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>-</string>
+                    </property>
+                    <property name="background">
+                     <color alpha="0">
+                      <red>0</red>
+                      <green>0</green>
+                      <blue>0</blue>
+                     </color>
+                    </property>
+                    <property name="foreground">
+                     <brush brushstyle="NoBrush">
+                      <color alpha="0">
+                       <red>0</red>
+                       <green>0</green>
+                       <blue>0</blue>
+                      </color>
+                     </brush>
                     </property>
                    </column>
                   </widget>
@@ -661,6 +807,9 @@
                    <property name="alternatingRowColors">
                     <bool>true</bool>
                    </property>
+                   <attribute name="headerStretchLastSection">
+                    <bool>true</bool>
+                   </attribute>
                    <column>
                     <property name="text">
                      <string>Format</string>
@@ -669,6 +818,27 @@
                    <column>
                     <property name="text">
                      <string>Color Space</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>-</string>
+                    </property>
+                    <property name="background">
+                     <color alpha="0">
+                      <red>0</red>
+                      <green>0</green>
+                      <blue>0</blue>
+                     </color>
+                    </property>
+                    <property name="foreground">
+                     <brush brushstyle="NoBrush">
+                      <color alpha="0">
+                       <red>0</red>
+                       <green>0</green>
+                       <blue>0</blue>
+                      </color>
+                     </brush>
                     </property>
                    </column>
                   </widget>
@@ -708,6 +878,9 @@
                  <property name="uniformRowHeights">
                   <bool>true</bool>
                  </property>
+                 <attribute name="headerStretchLastSection">
+                  <bool>true</bool>
+                 </attribute>
                  <column>
                   <property name="text">
                    <string>Index</string>
@@ -764,6 +937,20 @@
                    <set>AlignCenter</set>
                   </property>
                  </column>
+                 <column>
+                  <property name="text">
+                   <string>-</string>
+                  </property>
+                  <property name="foreground">
+                   <brush brushstyle="NoBrush">
+                    <color alpha="0">
+                     <red>0</red>
+                     <green>0</green>
+                     <blue>0</blue>
+                    </color>
+                   </brush>
+                  </property>
+                 </column>
                 </widget>
                </item>
               </layout>
@@ -802,6 +989,12 @@
                   <height>0</height>
                  </size>
                 </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>200</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                </widget>
               </item>
               <item>
@@ -831,6 +1024,9 @@
                 <property name="alternatingRowColors">
                  <bool>true</bool>
                 </property>
+                <attribute name="headerStretchLastSection">
+                 <bool>true</bool>
+                </attribute>
                 <column>
                  <property name="text">
                   <string>Format</string>
@@ -849,6 +1045,30 @@
                 <column>
                  <property name="text">
                   <string>Buffer</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>-</string>
+                 </property>
+                 <property name="textAlignment">
+                  <set>AlignLeading|AlignVCenter</set>
+                 </property>
+                 <property name="background">
+                  <color alpha="0">
+                   <red>0</red>
+                   <green>0</green>
+                   <blue>0</blue>
+                  </color>
+                 </property>
+                 <property name="foreground">
+                  <brush brushstyle="NoBrush">
+                   <color alpha="0">
+                    <red>0</red>
+                    <green>0</green>
+                    <blue>0</blue>
+                   </color>
+                  </brush>
                  </property>
                 </column>
                </widget>
@@ -870,7 +1090,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>854</width>
+     <width>941</width>
      <height>21</height>
     </rect>
    </property>
