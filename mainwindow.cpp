@@ -80,37 +80,6 @@ MainWindow::MainWindow(QWidget *parent) :
   connect(mTilingOptimalFilterInputs.usageFlagsFilter->model(), SIGNAL(itemChanged(QStandardItem*)), this, SLOT(on_itemChanged(QStandardItem*)));
   connect(mTilingOptimalFilterInputs.createFlagsFilter->model(), SIGNAL(itemChanged(QStandardItem*)), this, SLOT(on_itemChanged(QStandardItem*)));
 
-/*
-  QComboBox* cb = findChild<QComboBox*>("tilingLinearImageUsage");
-  Q_ASSERT(cb);
-  MakeCheckable(cb);
-  cb = findChild<QComboBox*>("tilingLinearImageCreate");
-  Q_ASSERT(cb);
-  MakeCheckable(cb);
-
-
-  cb = findChild<QComboBox*>("tilingOptimalImageUsage");
-  Q_ASSERT(cb);
-  MakeCheckable(cb);
-//  cb = findChild<QComboBox*>("tilingOptimalImageCreate");
-//  Q_ASSERT(cb);
-//  MakeCheckable(cb);
-
-  connect(cb->model(), SIGNAL(itemChanged(QStandardItem*)),
-          this, SLOT(on_itemChanged(QStandardItem*)));
-
-  cb = findChild<QComboBox*>("tilingLinearImageType");
-  Q_ASSERT(cb);
-  HideItem()
-*/
-
-//  auto model = new QStandardItemModel();
-//  auto item = new QStandardItem("First");
-//  item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
-//  item->setData(Qt::Unchecked, Qt::CheckStateRole);
-//  model->setItem(0, item);
-//  cb->setModel(model);
-
   createVulkanInstance();
   createVulkanSurface();
   enumerateGpus();
