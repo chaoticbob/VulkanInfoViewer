@@ -4,6 +4,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QMainWindow>
+#include <QTreeWidget>
 #include <QStandardItem>
 
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -32,6 +33,9 @@ public:
 private:
   void filterTreeWidgetItemsSimple(const QString& widgetName, const QString& filterText);
 
+protected:
+  virtual void resizeEvent(QResizeEvent* event);
+
 private slots:
   void on_gpus_currentIndexChanged(int index);
 
@@ -42,8 +46,6 @@ private slots:
   void on_featuresFilter_textChanged(const QString &arg1);
 
   void on_itemChanged(QStandardItem* item);
-  void on_dataChanged(const QModelIndex & topLeft, const QModelIndex & bottomRight);
-
   void on_tilingLinearImageType_currentIndexChanged(int index);
 
   void on_tilingOptimalImageType_currentIndexChanged(int index);
@@ -83,6 +85,8 @@ private:
   void  populateMemory(VkPhysicalDevice gpu);
   void  populateFormats(VkPhysicalDevice gpu);
 
+  void  updateSurfaceExtents(VkPhysicalDevice gpu);
+
 private:
   Ui::MainWindow *ui;
 
@@ -97,14 +101,18 @@ private:
   GpuProperties                   mGpuProperties;
 
   struct FilterInputs {
-    QLineEdit*  formatFilter = nullptr;
-    QComboBox*  imageTypeFilter = nullptr;
-    QComboBox*  usageFlagsFilter = nullptr;
-    QComboBox*  createFlagsFilter = nullptr;
+    VkImageTiling tiling = static_cast<VkImageTiling>(UINT32_MAX);
+    QLineEdit*    formatFilter = nullptr;
+    QComboBox*    imageTypeFilter = nullptr;
+    QComboBox*    usageFlagsFilter = nullptr;
+    QComboBox*    createFlagsFilter = nullptr;
+    QTreeWidget*  target = nullptr;
   };
 
   FilterInputs  mTilingLinearFilterInputs = {};
   FilterInputs  mTilingOptimalFilterInputs = {};
+
+  std::map<QAbstractItemModel*, FilterInputs*> mFilterInputTargets;
 };
 
 #endif // MAINWINDOW_H

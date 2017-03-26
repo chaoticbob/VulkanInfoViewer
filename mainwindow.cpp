@@ -17,7 +17,8 @@ void HideItem(int row, QComboBox* cb)
 void MakeCheckable(QComboBox* cb)
 {
   QStandardItemModel* model = qobject_cast<QStandardItemModel*>(cb->model());
-  for (int i = 1; i < cb->count(); ++i) {
+  int n = cb->count();
+  for (int i = 1; i < n; ++i) {
     auto item = model->item(i);
     item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
     item->setData(Qt::Unchecked, Qt::CheckStateRole);
@@ -33,33 +34,51 @@ MainWindow::MainWindow(QWidget *parent) :
 {
   ui->setupUi(this);
 
+  mTilingLinearFilterInputs.tiling            = VK_IMAGE_TILING_LINEAR;
   mTilingLinearFilterInputs.formatFilter      = findChild<QLineEdit*>("tilingLinearFormatFilter");
   mTilingLinearFilterInputs.imageTypeFilter   = findChild<QComboBox*>("tilingLinearImageType");
   mTilingLinearFilterInputs.usageFlagsFilter  = findChild<QComboBox*>("tilingLinearImageUsage");
   mTilingLinearFilterInputs.createFlagsFilter = findChild<QComboBox*>("tilingLinearImageCreate");
+  mTilingLinearFilterInputs.target            = findChild<QTreeWidget*>("tilingLinearFormatsWidget");
   Q_ASSERT(mTilingLinearFilterInputs.formatFilter);
   Q_ASSERT(mTilingLinearFilterInputs.imageTypeFilter);
   Q_ASSERT(mTilingLinearFilterInputs.usageFlagsFilter);
   Q_ASSERT(mTilingLinearFilterInputs.createFlagsFilter);
+  mFilterInputTargets[mTilingLinearFilterInputs.imageTypeFilter->model()] = &mTilingLinearFilterInputs;
+  mFilterInputTargets[mTilingLinearFilterInputs.usageFlagsFilter->model()] = &mTilingLinearFilterInputs;
+  mFilterInputTargets[mTilingLinearFilterInputs.createFlagsFilter->model()] = &mTilingLinearFilterInputs;
 
+  mTilingOptimalFilterInputs.tiling            = VK_IMAGE_TILING_OPTIMAL;
   mTilingOptimalFilterInputs.formatFilter      = findChild<QLineEdit*>("tilingOptimalFormatFilter");
   mTilingOptimalFilterInputs.imageTypeFilter   = findChild<QComboBox*>("tilingOptimalImageType");
   mTilingOptimalFilterInputs.usageFlagsFilter  = findChild<QComboBox*>("tilingOptimalImageUsage");
   mTilingOptimalFilterInputs.createFlagsFilter = findChild<QComboBox*>("tilingOptimalImageCreate");
+  mTilingOptimalFilterInputs.target            = findChild<QTreeWidget*>("tilingOptimalFormatsWidget");
   Q_ASSERT(mTilingOptimalFilterInputs.formatFilter);
   Q_ASSERT(mTilingOptimalFilterInputs.imageTypeFilter);
   Q_ASSERT(mTilingOptimalFilterInputs.usageFlagsFilter);
   Q_ASSERT(mTilingOptimalFilterInputs.createFlagsFilter);
+  mFilterInputTargets[mTilingOptimalFilterInputs.imageTypeFilter->model()] = &mTilingOptimalFilterInputs;
+  mFilterInputTargets[mTilingOptimalFilterInputs.usageFlagsFilter->model()] = &mTilingOptimalFilterInputs;
+  mFilterInputTargets[mTilingOptimalFilterInputs.createFlagsFilter->model()] = &mTilingOptimalFilterInputs;
 
+  // Hide the first item
   HideItem(0,  mTilingLinearFilterInputs.usageFlagsFilter);
   HideItem(0,  mTilingLinearFilterInputs.createFlagsFilter);
-  MakeCheckable(mTilingLinearFilterInputs.usageFlagsFilter);
-  MakeCheckable(mTilingLinearFilterInputs.createFlagsFilter);
-
   HideItem(0,  mTilingOptimalFilterInputs.usageFlagsFilter);
   HideItem(0,  mTilingOptimalFilterInputs.createFlagsFilter);
+
+  // Make items checkable
+  MakeCheckable(mTilingLinearFilterInputs.usageFlagsFilter);
+  MakeCheckable(mTilingLinearFilterInputs.createFlagsFilter);
   MakeCheckable(mTilingOptimalFilterInputs.usageFlagsFilter);
   MakeCheckable(mTilingOptimalFilterInputs.createFlagsFilter);
+
+  // Connect the check events to MainWindow::on_itemChanged
+  connect(mTilingLinearFilterInputs.usageFlagsFilter->model(), SIGNAL(itemChanged(QStandardItem*)), this, SLOT(on_itemChanged(QStandardItem*)));
+  connect(mTilingLinearFilterInputs.createFlagsFilter->model(), SIGNAL(itemChanged(QStandardItem*)), this, SLOT(on_itemChanged(QStandardItem*)));
+  connect(mTilingOptimalFilterInputs.usageFlagsFilter->model(), SIGNAL(itemChanged(QStandardItem*)), this, SLOT(on_itemChanged(QStandardItem*)));
+  connect(mTilingOptimalFilterInputs.createFlagsFilter->model(), SIGNAL(itemChanged(QStandardItem*)), this, SLOT(on_itemChanged(QStandardItem*)));
 
 /*
   QComboBox* cb = findChild<QComboBox*>("tilingLinearImageUsage");
@@ -155,7 +174,12 @@ void MainWindow::createVulkanSurface()
 
 void MainWindow::destroyVulkanSurface()
 {
+  if (mSurface == VK_NULL_HANDLE) {
+    return;
+  }
 
+  vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+  mSurface = VK_NULL_HANDLE;
 }
 
 void MainWindow::enumerateInstanceLayers()
@@ -593,6 +617,30 @@ void MainWindow::populateFeatures(VkPhysicalDevice gpu)
   }
 }
 
+void setLabelValue(QLabel* lb, uint32_t value)
+{
+  Q_ASSERT(lb);
+  lb->setText(QString::number(value));
+}
+
+void setLabelValue(QLabel* lb, const VkExtent2D& value)
+{
+  QLocale locale;
+
+  Q_ASSERT(lb);
+  lb->setText("(" + QString::number(value.width) + ", " + QString::number(value.height) +")");
+}
+
+void MainWindow::updateSurfaceExtents(VkPhysicalDevice gpu)
+{
+  VkSurfaceCapabilitiesKHR surfCaps = {};
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, mSurface, &surfCaps);
+
+  setLabelValue(findChild<QLabel*>("minImageExtentValue"), surfCaps.minImageExtent);
+  setLabelValue(findChild<QLabel*>("maxImageExtentValue"), surfCaps.maxImageExtent);
+  setLabelValue(findChild<QLabel*>("currentExtentValue"), surfCaps.currentExtent);
+}
+
 void MainWindow::populateSurface(VkPhysicalDevice gpu)
 {
   VkSurfaceCapabilitiesKHR surfCaps = {};
@@ -605,12 +653,11 @@ void MainWindow::populateSurface(VkPhysicalDevice gpu)
   res = vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, mSurface, &count, formats.data());
   assert(res == VK_SUCCESS);
 
-  QLabel* lb = findChild<QLabel*>("minImageCountValue");
-  Q_ASSERT(lb);
-  lb->setText(QString::number(surfCaps.minImageCount));
-  lb = findChild<QLabel*>("maxImageCountValue");
-  Q_ASSERT(lb);
-  lb->setText(QString::number(surfCaps.maxImageCount));
+  setLabelValue(findChild<QLabel*>("minImageCountValue"), surfCaps.minImageCount);
+  setLabelValue(findChild<QLabel*>("maxImageCountValue"), surfCaps.maxImageCount);
+  setLabelValue(findChild<QLabel*>("maxImageArrayLayersValue"), surfCaps.maxImageArrayLayers);
+
+  updateSurfaceExtents(gpu);
 
   res = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, mSurface, &count, nullptr);
   assert(res == VK_SUCCESS);
@@ -636,6 +683,17 @@ void MainWindow::populateSurface(VkPhysicalDevice gpu)
     QTreeWidgetItem* item = new QTreeWidgetItem();
     item->setText(0, toStringVkFormat(format.format));
     item->setText(1, toStringVkColorSpace(format.colorSpace));
+    item->setText(2, ((surfCaps.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) != 0) ? "Y" : "");
+    item->setText(3, ((surfCaps.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT ) != 0) ? "Y" : "");
+    item->setText(4, ((surfCaps.supportedUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT) != 0) ? "Y" : "");
+    item->setText(5, ((surfCaps.supportedUsageFlags & VK_IMAGE_USAGE_STORAGE_BIT) != 0) ? "Y" : "");
+    item->setText(6, ((surfCaps.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0) ? "Y" : "");
+    item->setText(7, ((surfCaps.supportedUsageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0) ? "Y" : "");
+    item->setText(8, ((surfCaps.supportedUsageFlags & VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT) != 0) ? "Y" : "");
+    item->setText(9, ((surfCaps.supportedUsageFlags & VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT) != 0) ? "Y" : "");
+    for (int c = 2; c < item->columnCount(); ++c) {
+      item->setTextAlignment(c, Qt::AlignHCenter);
+    }
     tw->addTopLevelItem(item);
   }
   for (int i = 0; i < tw->columnCount(); ++i) {
@@ -872,7 +930,6 @@ void updateImageFormats(
   }
 }
 
-
 void MainWindow::populateFormats(VkPhysicalDevice gpu)
 {
   uint32_t start = static_cast<uint32_t>(VK_FORMAT_BEGIN_RANGE);
@@ -880,8 +937,8 @@ void MainWindow::populateFormats(VkPhysicalDevice gpu)
 
   // Initial values
   VkImageType imageType = VK_IMAGE_TYPE_2D;
-  VkImageUsageFlagBits usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-  VkImageCreateFlagBits createFlags = static_cast<VkImageCreateFlagBits>(0);
+  VkImageUsageFlags usageFlags = static_cast<VkImageUsageFlags>(0);
+  VkImageCreateFlags createFlags = static_cast<VkImageCreateFlags>(0);
 
   QTreeWidget* tw = findChild<QTreeWidget*>("formatsWidget");
   Q_ASSERT(tw);
@@ -977,6 +1034,18 @@ void MainWindow::filterTreeWidgetItemsSimple(const QString &widgetName, const QS
   }
 }
 
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+  if (mInstance == VK_NULL_HANDLE) {
+    return;
+  }
+
+  destroyVulkanSurface();
+  createVulkanSurface();
+
+  updateSurfaceExtents(mCurrentGpu);
+}
+
 void MainWindow::on_limitsFilter_textChanged(const QString &arg1)
 {
   filterTreeWidgetItemsSimple("limitsWidget", arg1.trimmed());
@@ -992,33 +1061,79 @@ void MainWindow::on_featuresFilter_textChanged(const QString &arg1)
   filterTreeWidgetItemsSimple("featuresWidget", arg1.trimmed());
 }
 
-void MainWindow::on_itemChanged(QStandardItem *item)
+VkImageType getImageType(QComboBox* cb)
 {
-  int stopMe = 1;
+  VkImageType type = static_cast<VkImageType>(cb->currentIndex());
+  return type;
 }
 
-void MainWindow::on_dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight)
+bool isChecked(QStandardItemModel* model, int row)
 {
-  int stopMe = 1;
+  int n = model->rowCount();
+  Qt::CheckState value = model->item(row)->data(Qt::CheckStateRole).value<Qt::CheckState>();
+  return value == Qt::Checked;
+}
+
+VkImageUsageFlags getUsageFlags(QComboBox* cb)
+{
+  QStandardItemModel* model = qobject_cast<QStandardItemModel*>(cb->model());
+
+  VkImageUsageFlags result = static_cast<VkImageUsageFlags>(0);
+  result |= isChecked(model, 1) ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT : 0;
+  result |= isChecked(model, 2) ? VK_IMAGE_USAGE_TRANSFER_DST_BIT : 0;
+  result |= isChecked(model, 3) ? VK_IMAGE_USAGE_SAMPLED_BIT : 0;
+  result |= isChecked(model, 4) ? VK_IMAGE_USAGE_STORAGE_BIT : 0;
+  result |= isChecked(model, 5) ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : 0;
+  result |= isChecked(model, 6) ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : 0;
+  result |= isChecked(model, 7) ? VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT : 0;
+  result |= isChecked(model, 8) ? VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT : 0;
+  return result;
+}
+
+VkImageCreateFlags getCreateFlags(QComboBox* cb)
+{
+  QStandardItemModel* model = qobject_cast<QStandardItemModel*>(cb->model());
+
+  VkImageCreateFlags result = static_cast<VkImageCreateFlags>(0);
+  result |= isChecked(model, 1) ? VK_IMAGE_CREATE_SPARSE_BINDING_BIT : 0;
+  result |= isChecked(model, 2) ? VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT : 0;
+  result |= isChecked(model, 3) ? VK_IMAGE_CREATE_SPARSE_ALIASED_BIT : 0;
+  result |= isChecked(model, 4) ? VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT : 0;
+  result |= isChecked(model, 5) ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
+  result |= isChecked(model, 6) ? VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT_KHR : 0;
+  return result;
+}
+
+void MainWindow::on_itemChanged(QStandardItem *item)
+{
+  auto& inputs = mFilterInputTargets[item->model()];
+  auto& tw = inputs->target;
+  VkImageType type = getImageType(inputs->imageTypeFilter);
+  VkImageTiling tiling = inputs->tiling;
+  VkImageUsageFlags usageFlags = getUsageFlags(inputs->usageFlagsFilter);
+  VkImageCreateFlags createFlags = getCreateFlags(inputs->createFlagsFilter);
+  updateImageFormats(mCurrentGpu, tw, type, tiling, usageFlags, createFlags);
 }
 
 void MainWindow::on_tilingLinearImageType_currentIndexChanged(int index)
 {
-  QTreeWidget* tw = findChild<QTreeWidget*>("tilingLinearFormatsWidget");
+  auto inputs = &mTilingLinearFilterInputs;
+  auto& tw = inputs->target;
   VkImageType type = static_cast<VkImageType>(index);
-  VkImageTiling tiling = VK_IMAGE_TILING_LINEAR;
-  VkImageUsageFlagBits usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-  VkImageCreateFlagBits createFlags = static_cast<VkImageCreateFlagBits>(0);
+  VkImageTiling tiling = inputs->tiling;
+  VkImageUsageFlags usageFlags = getUsageFlags(inputs->usageFlagsFilter);
+  VkImageCreateFlags createFlags = getCreateFlags(inputs->createFlagsFilter);
   updateImageFormats(mCurrentGpu, tw, type, tiling, usageFlags, createFlags);
 }
 
 void MainWindow::on_tilingOptimalImageType_currentIndexChanged(int index)
 {
-  QTreeWidget* tw = findChild<QTreeWidget*>("tilingOptimalFormatsWidget");
+  auto inputs = &mTilingOptimalFilterInputs;
+  auto& tw = inputs->target;
   VkImageType type = static_cast<VkImageType>(index);
-  VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-  VkImageUsageFlagBits usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-  VkImageCreateFlagBits createFlags = static_cast<VkImageCreateFlagBits>(0);
+  VkImageTiling tiling = inputs->tiling;
+  VkImageUsageFlags usageFlags = getUsageFlags(inputs->usageFlagsFilter);
+  VkImageCreateFlags createFlags = getCreateFlags(inputs->createFlagsFilter);
   updateImageFormats(mCurrentGpu, tw, type, tiling, usageFlags, createFlags);
 }
 

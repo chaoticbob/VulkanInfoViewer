@@ -99,7 +99,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Device Type</string>
+               <string>Device Type:</string>
               </property>
              </widget>
             </item>
@@ -111,7 +111,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Device Name</string>
+               <string>Device Name:</string>
               </property>
              </widget>
             </item>
@@ -123,7 +123,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Pipeline Cache UUID</string>
+               <string>Pipeline Cache UUID:</string>
               </property>
              </widget>
             </item>
@@ -190,7 +190,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Device ID</string>
+               <string>Device ID:</string>
               </property>
              </widget>
             </item>
@@ -214,7 +214,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Driver Version</string>
+               <string>Driver Version:</string>
               </property>
              </widget>
             </item>
@@ -226,7 +226,7 @@
                </font>
               </property>
               <property name="text">
-               <string>API Version</string>
+               <string>API Version:</string>
               </property>
              </widget>
             </item>
@@ -238,7 +238,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Vendor ID</string>
+               <string>Vendor ID:</string>
               </property>
              </widget>
             </item>
@@ -663,7 +663,188 @@
               <layout class="QVBoxLayout" name="verticalLayout_10">
                <item>
                 <layout class="QGridLayout" name="gridLayout">
+                 <item row="1" column="1">
+                  <widget class="QLabel" name="maxImageCountValue">
+                   <property name="minimumSize">
+                    <size>
+                     <width>16</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QLabel" name="minImageCountValue">
+                   <property name="minimumSize">
+                    <size>
+                     <width>16</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="label_3">
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>minImageCount:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="3">
+                  <widget class="QLabel" name="label_21">
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>currentExtent:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="3">
+                  <widget class="QLabel" name="label_20">
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>maxImageExtent:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="label_5">
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>maxImageCount:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="3">
+                  <widget class="QLabel" name="label_8">
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>minImageExtent:</string>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="0" column="2">
+                  <spacer name="horizontalSpacer_7">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeType">
+                    <enum>QSizePolicy::Fixed</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>24</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item row="2" column="4">
+                  <widget class="QLabel" name="currentExtentValue">
+                   <property name="minimumSize">
+                    <size>
+                     <width>16</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="4">
+                  <widget class="QLabel" name="minImageExtentValue">
+                   <property name="minimumSize">
+                    <size>
+                     <width>16</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="4">
+                  <widget class="QLabel" name="maxImageExtentValue">
+                   <property name="minimumSize">
+                    <size>
+                     <width>16</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="5">
                   <spacer name="horizontalSpacer_3">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
@@ -676,8 +857,26 @@
                    </property>
                   </spacer>
                  </item>
-                 <item row="0" column="1">
-                  <widget class="QLabel" name="minImageCountValue">
+                 <item row="2" column="0">
+                  <widget class="QLabel" name="label_22">
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>maxImageArrayLayers:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QLabel" name="maxImageArrayLayersValue">
+                   <property name="minimumSize">
+                    <size>
+                     <width>16</width>
+                     <height>0</height>
+                    </size>
+                   </property>
                    <property name="font">
                     <font>
                      <pointsize>10</pointsize>
@@ -686,41 +885,8 @@
                    <property name="text">
                     <string/>
                    </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="0">
-                  <widget class="QLabel" name="label_5">
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>maxImageCount</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="1">
-                  <widget class="QLabel" name="maxImageCountValue">
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="0">
-                  <widget class="QLabel" name="label_3">
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>minImageCount</string>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                    </property>
                   </widget>
                  </item>
@@ -824,6 +990,46 @@
                    <column>
                     <property name="text">
                      <string>Color Space</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>Transfer Src</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>Transfer Dst</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>Sampled</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>Storage</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>Color Attachment</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>Depth Stencil Attachment</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>Transient Attachment</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>Input Attachment</string>
                     </property>
                    </column>
                    <column>
