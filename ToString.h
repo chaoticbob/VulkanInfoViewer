@@ -10,6 +10,8 @@ QString toStringDeviceType(VkPhysicalDeviceType type);
 QString toStringVkFormat(VkFormat format);
 QString toStringVkColorSpace(VkColorSpaceKHR colorSpace);
 QString toStringVkPresentMode(VkPresentModeKHR mode);
+QString toStringVkTransform(VkSurfaceTransformFlagsKHR transform);
+QString toStringVkCompositeAlpha(VkCompositeAlphaFlagsKHR mode);
 QString toStringFormatFeature(VkFormatFeatureFlagBits value);
 
 QString toStringFormatFeatureShort(VkFormatFeatureFlagBits value);

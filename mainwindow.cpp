@@ -628,6 +628,7 @@ void MainWindow::populateSurface(VkPhysicalDevice gpu)
 
   updateSurfaceExtents(gpu);
 
+  // Present modes
   res = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, mSurface, &count, nullptr);
   assert(res == VK_SUCCESS);
   std::vector<VkPresentModeKHR> presentModes(count);
@@ -645,6 +646,41 @@ void MainWindow::populateSurface(VkPhysicalDevice gpu)
     tw->resizeColumnToContents(i);
   }
 
+  // Transforms
+  tw = findChild<QTreeWidget*>("transformsWidget");
+  Q_ASSERT(tw);
+  tw->clear();
+  for (uint32_t i = 0; i < 32; ++i) {
+    VkSurfaceTransformFlagBitsKHR transform = static_cast<VkSurfaceTransformFlagBitsKHR>(1 << i);
+    if ((surfCaps.supportedTransforms & transform) == 0) {
+      continue;
+    }
+    QTreeWidgetItem* item = new QTreeWidgetItem();
+    item->setText(0, toStringVkTransform(transform));
+    tw->addTopLevelItem(item);
+  }
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+
+  // Composite Alpha
+  tw = findChild<QTreeWidget*>("compositeAlphaModesWidget");
+  Q_ASSERT(tw);
+  tw->clear();
+  for (uint32_t i = 0; i < 32; ++i) {
+    VkCompositeAlphaFlagBitsKHR mode = static_cast<VkCompositeAlphaFlagBitsKHR>(1 << i);
+    if ((surfCaps.supportedCompositeAlpha & mode) == 0) {
+      continue;
+    }
+    QTreeWidgetItem* item = new QTreeWidgetItem();
+    item->setText(0, toStringVkCompositeAlpha(mode));
+    tw->addTopLevelItem(item);
+  }
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+
+  // Formats and usage
   tw = findChild<QTreeWidget*>("surfaceFormatsWidget");
   Q_ASSERT(tw);
   tw->clear();

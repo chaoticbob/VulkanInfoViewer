@@ -652,9 +652,9 @@
          <attribute name="title">
           <string>Surface</string>
          </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_16">
+         <layout class="QVBoxLayout" name="verticalLayout_47">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_15">
+           <layout class="QVBoxLayout" name="verticalLayout_46">
             <item>
              <widget class="QGroupBox" name="groupBox">
               <property name="title">
@@ -896,64 +896,191 @@
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="groupBox_3">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>200</height>
-               </size>
-              </property>
-              <property name="title">
-               <string>Present Modes</string>
-              </property>
-              <layout class="QVBoxLayout" name="verticalLayout_13">
-               <item>
-                <layout class="QVBoxLayout" name="verticalLayout_12">
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <item>
+               <widget class="QGroupBox" name="groupBox_3">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>200</height>
+                 </size>
+                </property>
+                <property name="title">
+                 <string>Present Modes</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_13">
                  <item>
-                  <widget class="QTreeWidget" name="presentModesWidget">
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                   <property name="alternatingRowColors">
-                    <bool>true</bool>
-                   </property>
-                   <attribute name="headerStretchLastSection">
-                    <bool>true</bool>
-                   </attribute>
-                   <column>
-                    <property name="text">
-                     <string>Mode</string>
-                    </property>
-                   </column>
-                   <column>
-                    <property name="text">
-                     <string>-</string>
-                    </property>
-                    <property name="background">
-                     <color alpha="0">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </property>
-                    <property name="foreground">
-                     <brush brushstyle="NoBrush">
-                      <color alpha="0">
-                       <red>0</red>
-                       <green>0</green>
-                       <blue>0</blue>
-                      </color>
-                     </brush>
-                    </property>
-                   </column>
-                  </widget>
+                  <layout class="QVBoxLayout" name="verticalLayout_12">
+                   <item>
+                    <widget class="QTreeWidget" name="presentModesWidget">
+                     <property name="font">
+                      <font>
+                       <pointsize>10</pointsize>
+                      </font>
+                     </property>
+                     <property name="alternatingRowColors">
+                      <bool>true</bool>
+                     </property>
+                     <property name="indentation">
+                      <number>8</number>
+                     </property>
+                     <attribute name="headerStretchLastSection">
+                      <bool>true</bool>
+                     </attribute>
+                     <column>
+                      <property name="text">
+                       <string>Mode</string>
+                      </property>
+                     </column>
+                     <column>
+                      <property name="text">
+                       <string>-</string>
+                      </property>
+                      <property name="background">
+                       <color alpha="0">
+                        <red>0</red>
+                        <green>0</green>
+                        <blue>0</blue>
+                       </color>
+                      </property>
+                      <property name="foreground">
+                       <brush brushstyle="NoBrush">
+                        <color alpha="0">
+                         <red>0</red>
+                         <green>0</green>
+                         <blue>0</blue>
+                        </color>
+                       </brush>
+                      </property>
+                     </column>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                 </layout>
-               </item>
-              </layout>
-             </widget>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_7">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>200</height>
+                 </size>
+                </property>
+                <property name="title">
+                 <string>Transforms</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_16">
+                 <item>
+                  <layout class="QVBoxLayout" name="verticalLayout_15">
+                   <item>
+                    <widget class="QTreeWidget" name="transformsWidget">
+                     <property name="font">
+                      <font>
+                       <pointsize>10</pointsize>
+                      </font>
+                     </property>
+                     <property name="alternatingRowColors">
+                      <bool>true</bool>
+                     </property>
+                     <property name="indentation">
+                      <number>8</number>
+                     </property>
+                     <column>
+                      <property name="text">
+                       <string>Transform</string>
+                      </property>
+                     </column>
+                     <column>
+                      <property name="text">
+                       <string>-</string>
+                      </property>
+                      <property name="background">
+                       <color alpha="0">
+                        <red>0</red>
+                        <green>0</green>
+                        <blue>0</blue>
+                       </color>
+                      </property>
+                      <property name="foreground">
+                       <brush brushstyle="NoBrush">
+                        <color alpha="0">
+                         <red>0</red>
+                         <green>0</green>
+                         <blue>0</blue>
+                        </color>
+                       </brush>
+                      </property>
+                     </column>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_8">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>200</height>
+                 </size>
+                </property>
+                <property name="title">
+                 <string>Composite Alpha Modes</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_45">
+                 <item>
+                  <layout class="QVBoxLayout" name="verticalLayout_44">
+                   <item>
+                    <widget class="QTreeWidget" name="compositeAlphaModesWidget">
+                     <property name="font">
+                      <font>
+                       <pointsize>10</pointsize>
+                      </font>
+                     </property>
+                     <property name="alternatingRowColors">
+                      <bool>true</bool>
+                     </property>
+                     <property name="indentation">
+                      <number>8</number>
+                     </property>
+                     <column>
+                      <property name="text">
+                       <string>Mode</string>
+                      </property>
+                     </column>
+                     <column>
+                      <property name="text">
+                       <string>-</string>
+                      </property>
+                      <property name="background">
+                       <color alpha="0">
+                        <red>0</red>
+                        <green>0</green>
+                        <blue>0</blue>
+                       </color>
+                      </property>
+                      <property name="foreground">
+                       <brush brushstyle="NoBrush">
+                        <color alpha="0">
+                         <red>0</red>
+                         <green>0</green>
+                         <blue>0</blue>
+                        </color>
+                       </brush>
+                      </property>
+                     </column>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QGroupBox" name="groupBox_2">
@@ -978,6 +1105,9 @@
                    </property>
                    <property name="alternatingRowColors">
                     <bool>true</bool>
+                   </property>
+                   <property name="indentation">
+                    <number>8</number>
                    </property>
                    <attribute name="headerStretchLastSection">
                     <bool>true</bool>

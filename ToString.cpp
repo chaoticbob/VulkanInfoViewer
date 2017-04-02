@@ -254,6 +254,35 @@ QString toStringVkPresentMode(VkPresentModeKHR mode)
   return result;
 }
 
+QString toStringVkTransform(VkSurfaceTransformFlagsKHR transform)
+{
+  QString result;
+  switch (transform) {
+    case VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR                     : result = "VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR"; break;
+    case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR                    : result = "VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR"; break;
+    case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR                   : result = "VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR"; break;
+    case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR                   : result = "VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR"; break;
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR            : result = "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR"; break;
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR  : result = "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR"; break;
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR : result = "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR"; break;
+    case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR : result = "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR"; break;
+    case VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR                      : result = "VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR"; break;
+  }
+  return result;
+}
+
+QString toStringVkCompositeAlpha(VkCompositeAlphaFlagsKHR mode)
+{
+  QString result;
+  switch (mode) {
+    case VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR          : result = "VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR"; break;
+    case VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR  : result = "VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR"; break;
+    case VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR : result = "VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR"; break;
+    case VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR         : result = "VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR"; break;
+  }
+  return result;
+}
+
 QString toStringFormatFeature(VkFormatFeatureFlagBits value)
 {
   QString result;
