@@ -8,6 +8,8 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+unix:QT += x11extras
+
 TARGET = VulkanInfoViewer
 TEMPLATE = app
 
@@ -32,7 +34,10 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-INCLUDEPATH += "$$(VULKAN_SDK)/Include"
+unix:INCLUDEPATH += "$$(VULKAN_SDK)/x86_64/include"
+unix:LIBS += -L"$$(VULKAN_SDK)/x86_64/lib"
+unix:LIBS += -lvulkan
 
-LIBS += -L"$$(VULKAN_SDK)/Lib"
-LIBS += -lvulkan-1
+win32:INCLUDEPATH += "$$(VULKAN_SDK)/Include"
+win32:LIBS += -L"$$(VULKAN_SDK)/Lib"
+win32:LIBS += -lvulkan-1

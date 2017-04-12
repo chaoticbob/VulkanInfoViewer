@@ -2,7 +2,12 @@
 #include "ui_mainwindow.h"
 #include "ToString.h"
 
-#include <Windows.h>
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+  #include <Windows.h>
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
+  #include <QX11Info>
+  //#include <X11/Xutil.h>
+#endif
 
 #include <cassert>
 #include <sstream>
@@ -134,10 +139,17 @@ void MainWindow::destroyVulkanInstance()
 
 void MainWindow::createVulkanSurface()
 {
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
   VkWin32SurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
   createInfo.hinstance = ::GetModuleHandle(nullptr);
-  createInfo.hwnd      = (HWND)this->winId();
+  createInfo.hwnd      = static_cast<HWND>(this->winId());
   VkResult res = vkCreateWin32SurfaceKHR(mInstance, &createInfo, nullptr, &mSurface);
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
+  VkXcbSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR };
+  createInfo.connection = QX11Info::connection();
+  createInfo.window = static_cast<xcb_window_t>(this->winId());
+  VkResult res = vkCreateXcbSurfaceKHR(mInstance, &createInfo, nullptr, &mSurface);
+#endif
   assert(res == VK_SUCCESS);
 }
 
@@ -322,13 +334,13 @@ void MainWindow::populateGeneral(VkPhysicalDevice gpu)
   lb->setText(uuid.toUpper());
 }
 
-#define ADD_LIMIT(locale, tw, limits, prop)                 \
-  {                                                 \
-    QTreeWidgetItem* item = new QTreeWidgetItem();  \
-    item->setText(0, QString::fromUtf8(#prop));     \
-    item->setText(1, locale.toString(limits.prop)); \
-    item->setTextAlignment(1, Qt::AlignRight);      \
-    tw->addTopLevelItem(item);                      \
+#define ADD_LIMIT(locale, tw, limits, prop)                                  \
+  {                                                                          \
+    QTreeWidgetItem* item = new QTreeWidgetItem();                           \
+    item->setText(0, QString::fromUtf8(#prop));                              \
+    item->setText(1, locale.toString(static_cast<qulonglong>(limits.prop))); \
+    item->setTextAlignment(1, Qt::AlignRight);                               \
+    tw->addTopLevelItem(item);                                               \
   }
 
 void MainWindow::populateLimits(VkPhysicalDevice gpu)
@@ -773,7 +785,7 @@ void MainWindow::populateMemory(VkPhysicalDevice gpu)
   Q_ASSERT(tw);
   for (uint32_t i = 0; i < properties.memoryHeapCount; ++i) {
     const auto& heap = properties.memoryHeaps[i];
-    QString bytes = locale.toString(heap.size) + " bytes";
+    QString bytes = locale.toString(static_cast<qulonglong>(heap.size)) + " bytes";
     QString mbytes = locale.toString(heap.size / 1048576.0f) + " MB";
 
     auto item = new QTreeWidgetItem();
@@ -914,7 +926,7 @@ void updateImageFormats(
                      locale.toString(imageFormatProperties.maxExtent.height) + " / " +
                      locale.toString(imageFormatProperties.maxExtent.depth);
 
-    QString bytes = locale.toString(imageFormatProperties.maxResourceSize) + " bytes";
+    QString bytes = locale.toString(static_cast<qulonglong>(imageFormatProperties.maxResourceSize)) + " bytes";
     QString gbytes = locale.toString(imageFormatProperties.maxResourceSize / (1024.0 * 1048576.0)) + " GB";
 
     item->setText(1, extent);
