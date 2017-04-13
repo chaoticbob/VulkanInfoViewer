@@ -5,11 +5,10 @@
 int main(int argc, char *argv[])
 {
   QCoreApplication::addLibraryPath(".");
+#if defined(_WIN32)
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-  QApplication a(argc, argv);
-#if defined(__linux__)
-  a.setStyle(QStyleFactory::create("Fusion"));
 #endif
+  QApplication a(argc, argv);
   MainWindow w;
   w.show();
 
