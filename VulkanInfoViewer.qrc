@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/res">
+        <file>images/Vulkan_170px_Dec16.png</file>
+    </qresource>
+</RCC>

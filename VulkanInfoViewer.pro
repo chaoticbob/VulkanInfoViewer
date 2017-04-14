@@ -41,3 +41,8 @@ unix:LIBS += -lvulkan
 win32:INCLUDEPATH += "$$(VULKAN_SDK)/Include"
 win32:LIBS += -L"$$(VULKAN_SDK)/Lib"
 win32:LIBS += -lvulkan-1
+
+DISTFILES +=
+
+RESOURCES += \
+    VulkanInfoViewer.qrc
