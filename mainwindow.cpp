@@ -142,7 +142,7 @@ void MainWindow::createVulkanSurface()
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
   VkWin32SurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
   createInfo.hinstance = ::GetModuleHandle(nullptr);
-  createInfo.hwnd      = static_cast<HWND>(this->winId());
+  createInfo.hwnd      = (HWND)(this->winId());
   VkResult res = vkCreateWin32SurfaceKHR(mInstance, &createInfo, nullptr, &mSurface);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
   VkXcbSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR };
