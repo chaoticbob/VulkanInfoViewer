@@ -342,56 +342,127 @@
          <attribute name="title">
           <string>Extensions</string>
          </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_6">
+         <layout class="QVBoxLayout" name="verticalLayout_52">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_5">
-            <item>
-             <widget class="QTreeWidget" name="extensionsWidget">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="alternatingRowColors">
-               <bool>true</bool>
-              </property>
-              <attribute name="headerStretchLastSection">
-               <bool>true</bool>
-              </attribute>
-              <column>
-               <property name="text">
-                <string>Extension</string>
-               </property>
-              </column>
-              <column>
-               <property name="text">
-                <string>Spec Version</string>
-               </property>
-              </column>
-              <column>
-               <property name="text">
-                <string>-</string>
-               </property>
-               <property name="background">
-                <color alpha="0">
-                 <red>0</red>
-                 <green>0</green>
-                 <blue>0</blue>
-                </color>
-               </property>
-               <property name="foreground">
-                <brush brushstyle="NoBrush">
-                 <color alpha="0">
-                  <red>0</red>
-                  <green>0</green>
-                  <blue>0</blue>
-                 </color>
-                </brush>
-               </property>
-              </column>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QTabWidget" name="tabWidget_3">
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <widget class="QWidget" name="tab_16">
+             <attribute name="title">
+              <string>Instance</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_5">
+                <item>
+                 <widget class="QTreeWidget" name="instanceExtensionsWidget">
+                  <property name="font">
+                   <font>
+                    <pointsize>10</pointsize>
+                   </font>
+                  </property>
+                  <property name="alternatingRowColors">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="headerStretchLastSection">
+                   <bool>true</bool>
+                  </attribute>
+                  <column>
+                   <property name="text">
+                    <string>Extension</string>
+                   </property>
+                  </column>
+                  <column>
+                   <property name="text">
+                    <string>Spec Version</string>
+                   </property>
+                  </column>
+                  <column>
+                   <property name="text">
+                    <string>-</string>
+                   </property>
+                   <property name="background">
+                    <color alpha="0">
+                     <red>0</red>
+                     <green>0</green>
+                     <blue>0</blue>
+                    </color>
+                   </property>
+                   <property name="foreground">
+                    <brush brushstyle="NoBrush">
+                     <color alpha="0">
+                      <red>0</red>
+                      <green>0</green>
+                      <blue>0</blue>
+                     </color>
+                    </brush>
+                   </property>
+                  </column>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="tab_17">
+             <attribute name="title">
+              <string>Device</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_51">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_50">
+                <item>
+                 <widget class="QTreeWidget" name="deviceExtensionsWidget">
+                  <property name="font">
+                   <font>
+                    <pointsize>10</pointsize>
+                   </font>
+                  </property>
+                  <property name="alternatingRowColors">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="headerStretchLastSection">
+                   <bool>true</bool>
+                  </attribute>
+                  <column>
+                   <property name="text">
+                    <string>Extension</string>
+                   </property>
+                  </column>
+                  <column>
+                   <property name="text">
+                    <string>Spec Version</string>
+                   </property>
+                  </column>
+                  <column>
+                   <property name="text">
+                    <string>-</string>
+                   </property>
+                   <property name="background">
+                    <color alpha="0">
+                     <red>0</red>
+                     <green>0</green>
+                     <blue>0</blue>
+                    </color>
+                   </property>
+                   <property name="foreground">
+                    <brush brushstyle="NoBrush">
+                     <color alpha="0">
+                      <red>0</red>
+                      <green>0</green>
+                      <blue>0</blue>
+                     </color>
+                    </brush>
+                   </property>
+                  </column>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -2346,7 +2417,7 @@
      <x>0</x>
      <y>0</y>
      <width>1006</width>
-     <height>21</height>
+     <height>17</height>
     </rect>
    </property>
   </widget>

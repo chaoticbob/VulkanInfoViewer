@@ -108,6 +108,9 @@ void MainWindow::createVulkanInstance()
   enumerateInstanceExtensions();
   populateInstanceExtensions();
 
+  enumerateDeviceExtensions();
+  populateDeviceExtensions();
+
   VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
   appInfo.pApplicationName    = "Vulkan Info Viewer";
   appInfo.applicationVersion  = 1;
@@ -231,7 +234,7 @@ void MainWindow::enumerateInstanceExtensions()
 
 void MainWindow::populateInstanceExtensions()
 {
-  QTreeWidget* tw = findChild<QTreeWidget*>("extensionsWidget");
+  QTreeWidget* tw = findChild<QTreeWidget*>("instanceExtensionsWidget");
   Q_ASSERT(tw);
 
   for (const auto& it : mInstanceLayerExtensions) {
@@ -254,6 +257,36 @@ void MainWindow::populateInstanceExtensions()
       item->setTextAlignment(1, Qt::AlignHCenter);              \
       topItem->addChild(item);
     }
+  }
+
+  tw->expandAll();
+
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+}
+
+void MainWindow::enumerateDeviceExtensions()
+{
+  uint32_t count = 0;
+  VkResult res = vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr);
+  assert(res == VK_SUCCESS);
+
+  mDeviceExtensions.resize(count);
+  res = vkEnumerateInstanceExtensionProperties(nullptr, &count, mDeviceExtensions.data());
+}
+
+void MainWindow::populateDeviceExtensions()
+{
+  QTreeWidget* tw = findChild<QTreeWidget*>("deviceExtensionsWidget");
+  Q_ASSERT(tw);
+
+  for (const auto& extension : mDeviceExtensions) {
+    QTreeWidgetItem* topItem = new QTreeWidgetItem();
+    topItem->setText(0, QString::fromUtf8(extension.extensionName));
+    topItem->setText(1, QString::number(extension.specVersion));
+    topItem->setTextAlignment(1, Qt::AlignHCenter);
+    tw->addTopLevelItem(topItem);
   }
 
   tw->expandAll();

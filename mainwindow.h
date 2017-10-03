@@ -76,6 +76,8 @@ private:
 
   void  enumerateInstanceExtensions();
   void  populateInstanceExtensions();
+  void  enumerateDeviceExtensions();
+  void  populateDeviceExtensions();
 
   void  enumerateGpus();
   void  populateGpus();
@@ -94,15 +96,16 @@ private:
 private:
   Ui::MainWindow *ui;
 
-  std::vector<VkLayerProperties>  mInstanceLayers;
-  LayerExtensions                 mInstanceLayerExtensions;
+  std::vector<VkLayerProperties>      mInstanceLayers;
+  LayerExtensions                     mInstanceLayerExtensions;
+  std::vector<VkExtensionProperties>  mDeviceExtensions;
 
-  VkInstance                      mInstance = VK_NULL_HANDLE;
-  VkSurfaceKHR                    mSurface = VK_NULL_HANDLE;
+  VkInstance                          mInstance = VK_NULL_HANDLE;
+  VkSurfaceKHR                        mSurface = VK_NULL_HANDLE;
 
-  std::vector<VkPhysicalDevice>   mGpus;
-  VkPhysicalDevice                mCurrentGpu = VK_NULL_HANDLE;
-  GpuProperties                   mGpuProperties;
+  std::vector<VkPhysicalDevice>       mGpus;
+  VkPhysicalDevice                    mCurrentGpu = VK_NULL_HANDLE;
+  GpuProperties                       mGpuProperties;
 
   struct FilterInputs {
     VkImageTiling tiling = static_cast<VkImageTiling>(UINT32_MAX);
