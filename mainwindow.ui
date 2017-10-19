@@ -2355,7 +2355,7 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string> Vulkan Info Viewer 1.1</string>
+                 <string> Vulkan Info Viewer 1.2</string>
                 </property>
                </widget>
               </item>
