@@ -445,13 +445,9 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
   ADD_LIMIT(locale, tw, limits, maxFragmentDualSrcAttachments);
   ADD_LIMIT(locale, tw, limits, maxFragmentCombinedOutputResources);
   ADD_LIMIT(locale, tw, limits, maxComputeSharedMemorySize);
-  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupCount[0]);
-  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupCount[1]);
-  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupCount[2]);
+  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupCount[3]);
   ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupInvocations);
-  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupSize[0]);
-  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupSize[1]);
-  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupSize[2]);
+  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupSize[3]);
   ADD_LIMIT(locale, tw, limits, subPixelPrecisionBits);
   ADD_LIMIT(locale, tw, limits, subTexelPrecisionBits);
   ADD_LIMIT(locale, tw, limits, mipmapPrecisionBits);
@@ -460,10 +456,8 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
   ADD_LIMIT(locale, tw, limits, maxSamplerLodBias);
   ADD_LIMIT(locale, tw, limits, maxSamplerAnisotropy);
   ADD_LIMIT(locale, tw, limits, maxViewports);
-  ADD_LIMIT(locale, tw, limits, maxViewportDimensions[0]);
-  ADD_LIMIT(locale, tw, limits, maxViewportDimensions[1]);
-  ADD_LIMIT(locale, tw, limits, viewportBoundsRange[0]);
-  ADD_LIMIT(locale, tw, limits, viewportBoundsRange[1]);
+  ADD_LIMIT(locale, tw, limits, maxViewportDimensions[2]);
+  ADD_LIMIT(locale, tw, limits, viewportBoundsRange[2]);
   ADD_LIMIT(locale, tw, limits, viewportSubPixelBits);
   ADD_LIMIT(locale, tw, limits, minMemoryMapAlignment);
   ADD_LIMIT(locale, tw, limits, minTexelBufferOffsetAlignment);
