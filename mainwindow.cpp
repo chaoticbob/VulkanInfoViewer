@@ -108,9 +108,6 @@ void MainWindow::createVulkanInstance()
   enumerateInstanceExtensions();
   populateInstanceExtensions();
 
-  enumerateDeviceExtensions();
-  populateDeviceExtensions();
-
   VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
   appInfo.pApplicationName    = "Vulkan Info Viewer";
   appInfo.applicationVersion  = 1;
@@ -177,6 +174,10 @@ void MainWindow::enumerateInstanceLayers()
   mInstanceLayers.resize(count);
   res = vkEnumerateInstanceLayerProperties(&count, mInstanceLayers.data());
   assert(res == VK_SUCCESS);
+  std::sort(std::begin(mInstanceLayers),
+      std::end(mInstanceLayers),
+      [](const VkLayerProperties& a, const VkLayerProperties& b) -> bool {
+          return (strcmp(a.layerName, b.layerName) < 0); });
 }
 
 void MainWindow::populateInstanceLayers()
@@ -266,36 +267,6 @@ void MainWindow::populateInstanceExtensions()
   }
 }
 
-void MainWindow::enumerateDeviceExtensions()
-{
-  uint32_t count = 0;
-  VkResult res = vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr);
-  assert(res == VK_SUCCESS);
-
-  mDeviceExtensions.resize(count);
-  res = vkEnumerateInstanceExtensionProperties(nullptr, &count, mDeviceExtensions.data());
-}
-
-void MainWindow::populateDeviceExtensions()
-{
-  QTreeWidget* tw = findChild<QTreeWidget*>("deviceExtensionsWidget");
-  Q_ASSERT(tw);
-
-  for (const auto& extension : mDeviceExtensions) {
-    QTreeWidgetItem* topItem = new QTreeWidgetItem();
-    topItem->setText(0, QString::fromUtf8(extension.extensionName));
-    topItem->setText(1, QString::number(extension.specVersion));
-    topItem->setTextAlignment(1, Qt::AlignHCenter);
-    tw->addTopLevelItem(topItem);
-  }
-
-  tw->expandAll();
-
-  for (int i = 0; i < tw->columnCount(); ++i) {
-    tw->resizeColumnToContents(i);
-  }
-}
-
 void MainWindow::enumerateGpus()
 {
   uint32_t count = 0;
@@ -306,9 +277,29 @@ void MainWindow::enumerateGpus()
   assert(res == VK_SUCCESS);
 
   for (uint32_t i = 0; i < count; ++i) {
-    VkPhysicalDeviceProperties properties = {};
-    vkGetPhysicalDeviceProperties(mGpus[i], &properties);
-    mGpuProperties[mGpus[i]] = properties;
+    VkPhysicalDevice gpu = mGpus[i];
+    // Get device and descriptor indexing properties
+    VkPhysicalDeviceProperties2 properties = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+    VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptor_indexing_properties
+        = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT};
+    properties.pNext = &descriptor_indexing_properties;
+    vkGetPhysicalDeviceProperties2(mGpus[i], &properties);
+    mGpuProperties[gpu].device_properties = properties.properties;
+    mGpuProperties[gpu].descriptor_indexing_properties = descriptor_indexing_properties;
+    // Get device extensions
+    {
+      uint32_t count = 0;
+      VkResult res = vkEnumerateDeviceExtensionProperties(gpu, nullptr, &count, nullptr);
+      assert(res == VK_SUCCESS);
+
+      mGpuProperties[gpu].extensions.resize(count);
+      res = vkEnumerateDeviceExtensionProperties(gpu, nullptr, &count, mGpuProperties[mGpus[i]].extensions.data());
+      assert(res == VK_SUCCESS);
+      std::sort(std::begin(mGpuProperties[mGpus[i]].extensions),
+          std::end(mGpuProperties[mGpus[i]].extensions),
+          [](const VkExtensionProperties& a, const VkExtensionProperties& b) -> bool {
+              return (strcmp(a.extensionName, b.extensionName) < 0); });
+    }
   }
 }
 
@@ -320,7 +311,7 @@ void MainWindow::populateGpus()
   cb->clear();
 
   for (const auto& it : mGpuProperties) {
-    const auto& properties = it.second;
+    const auto& properties = it.second.device_properties;
     cb->addItem(QString::fromUtf8(properties.deviceName));
   }
 }
@@ -332,7 +323,7 @@ void MainWindow::populateGeneral(VkPhysicalDevice gpu)
     return;
   }
 
-  const VkPhysicalDeviceProperties& properties = it->second;
+  const VkPhysicalDeviceProperties& properties = it->second.device_properties;
 
   QLabel* lb = findChild<QLabel*>("apiVersionValue");
   Q_ASSERT(lb);
@@ -367,13 +358,36 @@ void MainWindow::populateGeneral(VkPhysicalDevice gpu)
   lb->setText(uuid.toUpper());
 }
 
-#define ADD_LIMIT(locale, tw, limits, prop)                                  \
+void MainWindow::populateDeviceExtensions(VkPhysicalDevice gpu)
+{
+  QTreeWidget* tw = findChild<QTreeWidget*>("deviceExtensionsWidget");
+  Q_ASSERT(tw);
+
+  tw->clear();
+
+  auto& extension = mGpuProperties[gpu].extensions;
+  for (const auto& extension : extension) {
+    QTreeWidgetItem* topItem = new QTreeWidgetItem();
+    topItem->setText(0, QString::fromUtf8(extension.extensionName));
+    topItem->setText(1, QString::number(extension.specVersion));
+    topItem->setTextAlignment(1, Qt::AlignHCenter);
+    tw->addTopLevelItem(topItem);
+  }
+
+  tw->expandAll();
+
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+}
+
+#define ADD_LIMIT(locale, parent, limits, prop)                              \
   {                                                                          \
     QTreeWidgetItem* item = new QTreeWidgetItem();                           \
     item->setText(0, QString::fromUtf8(#prop));                              \
     item->setText(1, locale.toString(static_cast<qulonglong>(limits.prop))); \
     item->setTextAlignment(1, Qt::AlignRight);                               \
-    tw->addTopLevelItem(item);                                               \
+    parent->addChild(item);                                                  \
   }
 
 void MainWindow::populateLimits(VkPhysicalDevice gpu)
@@ -389,118 +403,164 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
   if (it == mGpuProperties.end()) {
     return;
   }
-  const auto &limits = it->second.limits;
+
 
   QLocale locale;
 
-  ADD_LIMIT(locale, tw, limits, maxImageDimension1D);
-  ADD_LIMIT(locale, tw, limits, maxImageDimension2D);
-  ADD_LIMIT(locale, tw, limits, maxImageDimension3D);
-  ADD_LIMIT(locale, tw, limits, maxImageDimensionCube);
-  ADD_LIMIT(locale, tw, limits, maxImageArrayLayers);
-  ADD_LIMIT(locale, tw, limits, maxTexelBufferElements);
-  ADD_LIMIT(locale, tw, limits, maxUniformBufferRange);
-  ADD_LIMIT(locale, tw, limits, maxStorageBufferRange);
-  ADD_LIMIT(locale, tw, limits, maxPushConstantsSize);
-  ADD_LIMIT(locale, tw, limits, maxMemoryAllocationCount);
-  ADD_LIMIT(locale, tw, limits, maxSamplerAllocationCount);
-  ADD_LIMIT(locale, tw, limits, bufferImageGranularity);
-  ADD_LIMIT(locale, tw, limits, sparseAddressSpaceSize);
-  ADD_LIMIT(locale, tw, limits, maxBoundDescriptorSets);
-  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorSamplers);
-  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorUniformBuffers);
-  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorStorageBuffers);
-  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorSampledImages);
-  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorStorageImages);
-  ADD_LIMIT(locale, tw, limits, maxPerStageDescriptorInputAttachments);
-  ADD_LIMIT(locale, tw, limits, maxPerStageResources);
-  ADD_LIMIT(locale, tw, limits, maxDescriptorSetSamplers);
-  ADD_LIMIT(locale, tw, limits, maxDescriptorSetUniformBuffers);
-  ADD_LIMIT(locale, tw, limits, maxDescriptorSetUniformBuffersDynamic);
-  ADD_LIMIT(locale, tw, limits, maxDescriptorSetStorageBuffers);
-  ADD_LIMIT(locale, tw, limits, maxDescriptorSetStorageBuffersDynamic);
-  ADD_LIMIT(locale, tw, limits, maxDescriptorSetSampledImages);
-  ADD_LIMIT(locale, tw, limits, maxDescriptorSetStorageImages);
-  ADD_LIMIT(locale, tw, limits, maxDescriptorSetInputAttachments);
-  ADD_LIMIT(locale, tw, limits, maxVertexInputAttributes);
-  ADD_LIMIT(locale, tw, limits, maxVertexInputBindings);
-  ADD_LIMIT(locale, tw, limits, maxVertexInputAttributeOffset);
-  ADD_LIMIT(locale, tw, limits, maxVertexInputBindingStride);
-  ADD_LIMIT(locale, tw, limits, maxVertexOutputComponents);
-  ADD_LIMIT(locale, tw, limits, maxTessellationGenerationLevel);
-  ADD_LIMIT(locale, tw, limits, maxTessellationPatchSize);
-  ADD_LIMIT(locale, tw, limits, maxTessellationControlPerVertexInputComponents);
-  ADD_LIMIT(locale, tw, limits, maxTessellationControlPerVertexOutputComponents);
-  ADD_LIMIT(locale, tw, limits, maxTessellationControlPerPatchOutputComponents);
-  ADD_LIMIT(locale, tw, limits, maxTessellationControlTotalOutputComponents);
-  ADD_LIMIT(locale, tw, limits, maxTessellationEvaluationInputComponents);
-  ADD_LIMIT(locale, tw, limits, maxTessellationEvaluationOutputComponents);
-  ADD_LIMIT(locale, tw, limits, maxGeometryShaderInvocations);
-  ADD_LIMIT(locale, tw, limits, maxGeometryInputComponents);
-  ADD_LIMIT(locale, tw, limits, maxGeometryOutputComponents);
-  ADD_LIMIT(locale, tw, limits, maxGeometryOutputVertices);
-  ADD_LIMIT(locale, tw, limits, maxGeometryTotalOutputComponents);
-  ADD_LIMIT(locale, tw, limits, maxFragmentInputComponents);
-  ADD_LIMIT(locale, tw, limits, maxFragmentOutputAttachments);
-  ADD_LIMIT(locale, tw, limits, maxFragmentDualSrcAttachments);
-  ADD_LIMIT(locale, tw, limits, maxFragmentCombinedOutputResources);
-  ADD_LIMIT(locale, tw, limits, maxComputeSharedMemorySize);
-  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupCount[3]);
-  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupInvocations);
-  ADD_LIMIT(locale, tw, limits, maxComputeWorkGroupSize[3]);
-  ADD_LIMIT(locale, tw, limits, subPixelPrecisionBits);
-  ADD_LIMIT(locale, tw, limits, subTexelPrecisionBits);
-  ADD_LIMIT(locale, tw, limits, mipmapPrecisionBits);
-  ADD_LIMIT(locale, tw, limits, maxDrawIndexedIndexValue);
-  ADD_LIMIT(locale, tw, limits, maxDrawIndirectCount);
-  ADD_LIMIT(locale, tw, limits, maxSamplerLodBias);
-  ADD_LIMIT(locale, tw, limits, maxSamplerAnisotropy);
-  ADD_LIMIT(locale, tw, limits, maxViewports);
-  ADD_LIMIT(locale, tw, limits, maxViewportDimensions[2]);
-  ADD_LIMIT(locale, tw, limits, viewportBoundsRange[2]);
-  ADD_LIMIT(locale, tw, limits, viewportSubPixelBits);
-  ADD_LIMIT(locale, tw, limits, minMemoryMapAlignment);
-  ADD_LIMIT(locale, tw, limits, minTexelBufferOffsetAlignment);
-  ADD_LIMIT(locale, tw, limits, minUniformBufferOffsetAlignment);
-  ADD_LIMIT(locale, tw, limits, minStorageBufferOffsetAlignment);
-  ADD_LIMIT(locale, tw, limits, minTexelOffset);
-  ADD_LIMIT(locale, tw, limits, maxTexelOffset);
-  ADD_LIMIT(locale, tw, limits, minTexelGatherOffset);
-  ADD_LIMIT(locale, tw, limits, maxTexelGatherOffset);
-  ADD_LIMIT(locale, tw, limits, minInterpolationOffset);
-  ADD_LIMIT(locale, tw, limits, maxInterpolationOffset);
-  ADD_LIMIT(locale, tw, limits, subPixelInterpolationOffsetBits);
-  ADD_LIMIT(locale, tw, limits, maxFramebufferWidth);
-  ADD_LIMIT(locale, tw, limits, maxFramebufferHeight);
-  ADD_LIMIT(locale, tw, limits, maxFramebufferLayers);
-  ADD_LIMIT(locale, tw, limits, framebufferColorSampleCounts);
-  ADD_LIMIT(locale, tw, limits, framebufferDepthSampleCounts);
-  ADD_LIMIT(locale, tw, limits, framebufferStencilSampleCounts);
-  ADD_LIMIT(locale, tw, limits, framebufferNoAttachmentsSampleCounts);
-  ADD_LIMIT(locale, tw, limits, maxColorAttachments);
-  ADD_LIMIT(locale, tw, limits, sampledImageColorSampleCounts);
-  ADD_LIMIT(locale, tw, limits, sampledImageIntegerSampleCounts);
-  ADD_LIMIT(locale, tw, limits, sampledImageDepthSampleCounts);
-  ADD_LIMIT(locale, tw, limits, sampledImageStencilSampleCounts);
-  ADD_LIMIT(locale, tw, limits, storageImageSampleCounts);
-  ADD_LIMIT(locale, tw, limits, maxSampleMaskWords);
-  ADD_LIMIT(locale, tw, limits, timestampComputeAndGraphics);
-  ADD_LIMIT(locale, tw, limits, timestampPeriod);
-  ADD_LIMIT(locale, tw, limits, maxClipDistances);
-  ADD_LIMIT(locale, tw, limits, maxCullDistances);
-  ADD_LIMIT(locale, tw, limits, maxCombinedClipAndCullDistances);
-  ADD_LIMIT(locale, tw, limits, discreteQueuePriorities);
-  ADD_LIMIT(locale, tw, limits, pointSizeRange[0]);
-  ADD_LIMIT(locale, tw, limits, pointSizeRange[1]);
-  ADD_LIMIT(locale, tw, limits, lineWidthRange[0]);
-  ADD_LIMIT(locale, tw, limits, lineWidthRange[1]);
-  ADD_LIMIT(locale, tw, limits, pointSizeGranularity);
-  ADD_LIMIT(locale, tw, limits, lineWidthGranularity);
-  ADD_LIMIT(locale, tw, limits, strictLines);
-  ADD_LIMIT(locale, tw, limits, standardSampleLocations);
-  ADD_LIMIT(locale, tw, limits, optimalBufferCopyOffsetAlignment);
-  ADD_LIMIT(locale, tw, limits, optimalBufferCopyRowPitchAlignment);
-  ADD_LIMIT(locale, tw, limits, nonCoherentAtomSize);
+  // Device limits
+  {
+    QTreeWidgetItem* parent_item = new QTreeWidgetItem();
+    parent_item->setText(0, "Device Limits");
+    tw->addTopLevelItem(parent_item);
+
+    const auto &limits = it->second.device_properties.limits;
+
+    ADD_LIMIT(locale, parent_item, limits, maxImageDimension1D);
+    ADD_LIMIT(locale, parent_item, limits, maxImageDimension2D);
+    ADD_LIMIT(locale, parent_item, limits, maxImageDimension3D);
+    ADD_LIMIT(locale, parent_item, limits, maxImageDimensionCube);
+    ADD_LIMIT(locale, parent_item, limits, maxImageArrayLayers);
+    ADD_LIMIT(locale, parent_item, limits, maxTexelBufferElements);
+    ADD_LIMIT(locale, parent_item, limits, maxUniformBufferRange);
+    ADD_LIMIT(locale, parent_item, limits, maxStorageBufferRange);
+    ADD_LIMIT(locale, parent_item, limits, maxPushConstantsSize);
+    ADD_LIMIT(locale, parent_item, limits, maxMemoryAllocationCount);
+    ADD_LIMIT(locale, parent_item, limits, maxSamplerAllocationCount);
+    ADD_LIMIT(locale, parent_item, limits, bufferImageGranularity);
+    ADD_LIMIT(locale, parent_item, limits, sparseAddressSpaceSize);
+    ADD_LIMIT(locale, parent_item, limits, maxBoundDescriptorSets);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorSamplers);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorUniformBuffers);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorStorageBuffers);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorSampledImages);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorStorageImages);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorInputAttachments);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageResources);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetSamplers);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetUniformBuffers);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetUniformBuffersDynamic);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetStorageBuffers);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetStorageBuffersDynamic);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetSampledImages);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetStorageImages);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetInputAttachments);
+    ADD_LIMIT(locale, parent_item, limits, maxVertexInputAttributes);
+    ADD_LIMIT(locale, parent_item, limits, maxVertexInputBindings);
+    ADD_LIMIT(locale, parent_item, limits, maxVertexInputAttributeOffset);
+    ADD_LIMIT(locale, parent_item, limits, maxVertexInputBindingStride);
+    ADD_LIMIT(locale, parent_item, limits, maxVertexOutputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxTessellationGenerationLevel);
+    ADD_LIMIT(locale, parent_item, limits, maxTessellationPatchSize);
+    ADD_LIMIT(locale, parent_item, limits, maxTessellationControlPerVertexInputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxTessellationControlPerVertexOutputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxTessellationControlPerPatchOutputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxTessellationControlTotalOutputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxTessellationEvaluationInputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxTessellationEvaluationOutputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxGeometryShaderInvocations);
+    ADD_LIMIT(locale, parent_item, limits, maxGeometryInputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxGeometryOutputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxGeometryOutputVertices);
+    ADD_LIMIT(locale, parent_item, limits, maxGeometryTotalOutputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxFragmentInputComponents);
+    ADD_LIMIT(locale, parent_item, limits, maxFragmentOutputAttachments);
+    ADD_LIMIT(locale, parent_item, limits, maxFragmentDualSrcAttachments);
+    ADD_LIMIT(locale, parent_item, limits, maxFragmentCombinedOutputResources);
+    ADD_LIMIT(locale, parent_item, limits, maxComputeSharedMemorySize);
+    ADD_LIMIT(locale, parent_item, limits, maxComputeWorkGroupCount[3]);
+    ADD_LIMIT(locale, parent_item, limits, maxComputeWorkGroupInvocations);
+    ADD_LIMIT(locale, parent_item, limits, maxComputeWorkGroupSize[3]);
+    ADD_LIMIT(locale, parent_item, limits, subPixelPrecisionBits);
+    ADD_LIMIT(locale, parent_item, limits, subTexelPrecisionBits);
+    ADD_LIMIT(locale, parent_item, limits, mipmapPrecisionBits);
+    ADD_LIMIT(locale, parent_item, limits, maxDrawIndexedIndexValue);
+    ADD_LIMIT(locale, parent_item, limits, maxDrawIndirectCount);
+    ADD_LIMIT(locale, parent_item, limits, maxSamplerLodBias);
+    ADD_LIMIT(locale, parent_item, limits, maxSamplerAnisotropy);
+    ADD_LIMIT(locale, parent_item, limits, maxViewports);
+    ADD_LIMIT(locale, parent_item, limits, maxViewportDimensions[2]);
+    ADD_LIMIT(locale, parent_item, limits, viewportBoundsRange[2]);
+    ADD_LIMIT(locale, parent_item, limits, viewportSubPixelBits);
+    ADD_LIMIT(locale, parent_item, limits, minMemoryMapAlignment);
+    ADD_LIMIT(locale, parent_item, limits, minTexelBufferOffsetAlignment);
+    ADD_LIMIT(locale, parent_item, limits, minUniformBufferOffsetAlignment);
+    ADD_LIMIT(locale, parent_item, limits, minStorageBufferOffsetAlignment);
+    ADD_LIMIT(locale, parent_item, limits, minTexelOffset);
+    ADD_LIMIT(locale, parent_item, limits, maxTexelOffset);
+    ADD_LIMIT(locale, parent_item, limits, minTexelGatherOffset);
+    ADD_LIMIT(locale, parent_item, limits, maxTexelGatherOffset);
+    ADD_LIMIT(locale, parent_item, limits, minInterpolationOffset);
+    ADD_LIMIT(locale, parent_item, limits, maxInterpolationOffset);
+    ADD_LIMIT(locale, parent_item, limits, subPixelInterpolationOffsetBits);
+    ADD_LIMIT(locale, parent_item, limits, maxFramebufferWidth);
+    ADD_LIMIT(locale, parent_item, limits, maxFramebufferHeight);
+    ADD_LIMIT(locale, parent_item, limits, maxFramebufferLayers);
+    ADD_LIMIT(locale, parent_item, limits, framebufferColorSampleCounts);
+    ADD_LIMIT(locale, parent_item, limits, framebufferDepthSampleCounts);
+    ADD_LIMIT(locale, parent_item, limits, framebufferStencilSampleCounts);
+    ADD_LIMIT(locale, parent_item, limits, framebufferNoAttachmentsSampleCounts);
+    ADD_LIMIT(locale, parent_item, limits, maxColorAttachments);
+    ADD_LIMIT(locale, parent_item, limits, sampledImageColorSampleCounts);
+    ADD_LIMIT(locale, parent_item, limits, sampledImageIntegerSampleCounts);
+    ADD_LIMIT(locale, parent_item, limits, sampledImageDepthSampleCounts);
+    ADD_LIMIT(locale, parent_item, limits, sampledImageStencilSampleCounts);
+    ADD_LIMIT(locale, parent_item, limits, storageImageSampleCounts);
+    ADD_LIMIT(locale, parent_item, limits, maxSampleMaskWords);
+    ADD_LIMIT(locale, parent_item, limits, timestampComputeAndGraphics);
+    ADD_LIMIT(locale, parent_item, limits, timestampPeriod);
+    ADD_LIMIT(locale, parent_item, limits, maxClipDistances);
+    ADD_LIMIT(locale, parent_item, limits, maxCullDistances);
+    ADD_LIMIT(locale, parent_item, limits, maxCombinedClipAndCullDistances);
+    ADD_LIMIT(locale, parent_item, limits, discreteQueuePriorities);
+    ADD_LIMIT(locale, parent_item, limits, pointSizeRange[0]);
+    ADD_LIMIT(locale, parent_item, limits, pointSizeRange[1]);
+    ADD_LIMIT(locale, parent_item, limits, lineWidthRange[0]);
+    ADD_LIMIT(locale, parent_item, limits, lineWidthRange[1]);
+    ADD_LIMIT(locale, parent_item, limits, pointSizeGranularity);
+    ADD_LIMIT(locale, parent_item, limits, lineWidthGranularity);
+    ADD_LIMIT(locale, parent_item, limits, strictLines);
+    ADD_LIMIT(locale, parent_item, limits, standardSampleLocations);
+    ADD_LIMIT(locale, parent_item, limits, optimalBufferCopyOffsetAlignment);
+    ADD_LIMIT(locale, parent_item, limits, optimalBufferCopyRowPitchAlignment);
+    ADD_LIMIT(locale, parent_item, limits, nonCoherentAtomSize);
+
+    parent_item->setExpanded(true);
+  }
+
+  // Descriptor indexing limits
+  {
+    QTreeWidgetItem* parent_item = new QTreeWidgetItem();
+    parent_item->setText(0, "Descriptor Indexing Limits");
+    tw->addTopLevelItem(parent_item);
+
+    const auto &limits = it->second.descriptor_indexing_properties;
+
+    ADD_LIMIT(locale, parent_item, limits, maxUpdateAfterBindDescriptorsInAllPools);
+    ADD_LIMIT(locale, parent_item, limits, shaderUniformBufferArrayNonUniformIndexingNative);
+    ADD_LIMIT(locale, parent_item, limits, shaderSampledImageArrayNonUniformIndexingNative);
+    ADD_LIMIT(locale, parent_item, limits, shaderStorageBufferArrayNonUniformIndexingNative);
+    ADD_LIMIT(locale, parent_item, limits, shaderStorageImageArrayNonUniformIndexingNative);
+    ADD_LIMIT(locale, parent_item, limits, shaderInputAttachmentArrayNonUniformIndexingNative);
+    ADD_LIMIT(locale, parent_item, limits, robustBufferAccessUpdateAfterBind);
+    ADD_LIMIT(locale, parent_item, limits, quadDivergentImplicitLod);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorUpdateAfterBindSamplers);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorUpdateAfterBindUniformBuffers);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorUpdateAfterBindStorageBuffers);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorUpdateAfterBindSampledImages);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorUpdateAfterBindStorageImages);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageDescriptorUpdateAfterBindInputAttachments);
+    ADD_LIMIT(locale, parent_item, limits, maxPerStageUpdateAfterBindResources);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetUpdateAfterBindSamplers);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetUpdateAfterBindUniformBuffers);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetUpdateAfterBindUniformBuffersDynamic);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetUpdateAfterBindStorageBuffers);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetUpdateAfterBindStorageBuffersDynamic);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetUpdateAfterBindSampledImages);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetUpdateAfterBindStorageImages);
+    ADD_LIMIT(locale, parent_item, limits, maxDescriptorSetUpdateAfterBindInputAttachments);
+
+    parent_item->setExpanded(true);
+  }
 
   for (int i = 0; i < tw->columnCount(); ++i) {
     tw->resizeColumnToContents(i);
@@ -530,7 +590,7 @@ void MainWindow::populateSparse(VkPhysicalDevice gpu)
     return;
   }
 
-  const auto &sparseProperties = it->second.sparseProperties;
+  const auto &sparseProperties = it->second.device_properties.sparseProperties;
 
   ADD_SPARSE(tw, sparseProperties, residencyStandard2DBlockShape);
   ADD_SPARSE(tw, sparseProperties, residencyStandard2DMultisampleBlockShape);
@@ -543,13 +603,13 @@ void MainWindow::populateSparse(VkPhysicalDevice gpu)
   }
 }
 
-#define ADD_FEATURE(tw, features, prop)                       \
+#define ADD_FEATURE(parent, features, prop)                   \
   {                                                           \
     QTreeWidgetItem* item = new QTreeWidgetItem();            \
     item->setText(0, QString::fromUtf8(#prop));               \
-    item->setText(1, (features.prop == VK_TRUE) ? "Y" : ""); \
+    item->setText(1, (features.prop == VK_TRUE) ? "Y" : "");  \
     item->setTextAlignment(1, Qt::AlignHCenter);              \
-    tw->addTopLevelItem(item);                                \
+    parent->addChild(item);                                   \
   }
 
 void MainWindow::populateFeatures(VkPhysicalDevice gpu)
@@ -561,64 +621,108 @@ void MainWindow::populateFeatures(VkPhysicalDevice gpu)
 
   tw->clear();
 
-  VkPhysicalDeviceFeatures features = {};
-  vkGetPhysicalDeviceFeatures(gpu, &features);
+  VkPhysicalDeviceFeatures2 features2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+  VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptor_indexing_features
+      = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT };
+  features2.pNext= & descriptor_indexing_features;
+  vkGetPhysicalDeviceFeatures2(gpu, &features2);
 
-  ADD_FEATURE(tw, features, robustBufferAccess);
-  ADD_FEATURE(tw, features, fullDrawIndexUint32);
-  ADD_FEATURE(tw, features, imageCubeArray);
-  ADD_FEATURE(tw, features, independentBlend);
-  ADD_FEATURE(tw, features, geometryShader);
-  ADD_FEATURE(tw, features, tessellationShader);
-  ADD_FEATURE(tw, features, sampleRateShading);
-  ADD_FEATURE(tw, features, dualSrcBlend);
-  ADD_FEATURE(tw, features, logicOp);
-  ADD_FEATURE(tw, features, multiDrawIndirect);
-  ADD_FEATURE(tw, features, drawIndirectFirstInstance);
-  ADD_FEATURE(tw, features, depthClamp);
-  ADD_FEATURE(tw, features, depthBiasClamp);
-  ADD_FEATURE(tw, features, fillModeNonSolid);
-  ADD_FEATURE(tw, features, depthBounds);
-  ADD_FEATURE(tw, features, wideLines);
-  ADD_FEATURE(tw, features, largePoints);
-  ADD_FEATURE(tw, features, alphaToOne);
-  ADD_FEATURE(tw, features, multiViewport);
-  ADD_FEATURE(tw, features, samplerAnisotropy);
-  ADD_FEATURE(tw, features, textureCompressionETC2);
-  ADD_FEATURE(tw, features, textureCompressionASTC_LDR);
-  ADD_FEATURE(tw, features, textureCompressionBC);
-  ADD_FEATURE(tw, features, occlusionQueryPrecise);
-  ADD_FEATURE(tw, features, pipelineStatisticsQuery);
-  ADD_FEATURE(tw, features, vertexPipelineStoresAndAtomics);
-  ADD_FEATURE(tw, features, fragmentStoresAndAtomics);
-  ADD_FEATURE(tw, features, shaderTessellationAndGeometryPointSize);
-  ADD_FEATURE(tw, features, shaderImageGatherExtended);
-  ADD_FEATURE(tw, features, shaderStorageImageExtendedFormats);
-  ADD_FEATURE(tw, features, shaderStorageImageMultisample);
-  ADD_FEATURE(tw, features, shaderStorageImageReadWithoutFormat);
-  ADD_FEATURE(tw, features, shaderStorageImageWriteWithoutFormat);
-  ADD_FEATURE(tw, features, shaderUniformBufferArrayDynamicIndexing);
-  ADD_FEATURE(tw, features, shaderSampledImageArrayDynamicIndexing);
-  ADD_FEATURE(tw, features, shaderStorageBufferArrayDynamicIndexing);
-  ADD_FEATURE(tw, features, shaderStorageImageArrayDynamicIndexing);
-  ADD_FEATURE(tw, features, shaderClipDistance);
-  ADD_FEATURE(tw, features, shaderCullDistance);
-  ADD_FEATURE(tw, features, shaderFloat64);
-  ADD_FEATURE(tw, features, shaderInt64);
-  ADD_FEATURE(tw, features, shaderInt16);
-  ADD_FEATURE(tw, features, shaderResourceResidency);
-  ADD_FEATURE(tw, features, shaderResourceMinLod);
-  ADD_FEATURE(tw, features, sparseBinding);
-  ADD_FEATURE(tw, features, sparseResidencyBuffer);
-  ADD_FEATURE(tw, features, sparseResidencyImage2D);
-  ADD_FEATURE(tw, features, sparseResidencyImage3D);
-  ADD_FEATURE(tw, features, sparseResidency2Samples);
-  ADD_FEATURE(tw, features, sparseResidency4Samples);
-  ADD_FEATURE(tw, features, sparseResidency8Samples);
-  ADD_FEATURE(tw, features, sparseResidency16Samples);
-  ADD_FEATURE(tw, features, sparseResidencyAliased);
-  ADD_FEATURE(tw, features, variableMultisampleRate);
-  ADD_FEATURE(tw, features, inheritedQueries);
+  // Device limits
+  {
+    QTreeWidgetItem* parent_item = new QTreeWidgetItem();
+    parent_item->setText(0, "Device Features");
+    tw->addTopLevelItem(parent_item);
+
+    const VkPhysicalDeviceFeatures& features = features2.features;
+    ADD_FEATURE(parent_item, features, robustBufferAccess);
+    ADD_FEATURE(parent_item, features, fullDrawIndexUint32);
+    ADD_FEATURE(parent_item, features, imageCubeArray);
+    ADD_FEATURE(parent_item, features, independentBlend);
+    ADD_FEATURE(parent_item, features, geometryShader);
+    ADD_FEATURE(parent_item, features, tessellationShader);
+    ADD_FEATURE(parent_item, features, sampleRateShading);
+    ADD_FEATURE(parent_item, features, dualSrcBlend);
+    ADD_FEATURE(parent_item, features, logicOp);
+    ADD_FEATURE(parent_item, features, multiDrawIndirect);
+    ADD_FEATURE(parent_item, features, drawIndirectFirstInstance);
+    ADD_FEATURE(parent_item, features, depthClamp);
+    ADD_FEATURE(parent_item, features, depthBiasClamp);
+    ADD_FEATURE(parent_item, features, fillModeNonSolid);
+    ADD_FEATURE(parent_item, features, depthBounds);
+    ADD_FEATURE(parent_item, features, wideLines);
+    ADD_FEATURE(parent_item, features, largePoints);
+    ADD_FEATURE(parent_item, features, alphaToOne);
+    ADD_FEATURE(parent_item, features, multiViewport);
+    ADD_FEATURE(parent_item, features, samplerAnisotropy);
+    ADD_FEATURE(parent_item, features, textureCompressionETC2);
+    ADD_FEATURE(parent_item, features, textureCompressionASTC_LDR);
+    ADD_FEATURE(parent_item, features, textureCompressionBC);
+    ADD_FEATURE(parent_item, features, occlusionQueryPrecise);
+    ADD_FEATURE(parent_item, features, pipelineStatisticsQuery);
+    ADD_FEATURE(parent_item, features, vertexPipelineStoresAndAtomics);
+    ADD_FEATURE(parent_item, features, fragmentStoresAndAtomics);
+    ADD_FEATURE(parent_item, features, shaderTessellationAndGeometryPointSize);
+    ADD_FEATURE(parent_item, features, shaderImageGatherExtended);
+    ADD_FEATURE(parent_item, features, shaderStorageImageExtendedFormats);
+    ADD_FEATURE(parent_item, features, shaderStorageImageMultisample);
+    ADD_FEATURE(parent_item, features, shaderStorageImageReadWithoutFormat);
+    ADD_FEATURE(parent_item, features, shaderStorageImageWriteWithoutFormat);
+    ADD_FEATURE(parent_item, features, shaderUniformBufferArrayDynamicIndexing);
+    ADD_FEATURE(parent_item, features, shaderSampledImageArrayDynamicIndexing);
+    ADD_FEATURE(parent_item, features, shaderStorageBufferArrayDynamicIndexing);
+    ADD_FEATURE(parent_item, features, shaderStorageImageArrayDynamicIndexing);
+    ADD_FEATURE(parent_item, features, shaderClipDistance);
+    ADD_FEATURE(parent_item, features, shaderCullDistance);
+    ADD_FEATURE(parent_item, features, shaderFloat64);
+    ADD_FEATURE(parent_item, features, shaderInt64);
+    ADD_FEATURE(parent_item, features, shaderInt16);
+    ADD_FEATURE(parent_item, features, shaderResourceResidency);
+    ADD_FEATURE(parent_item, features, shaderResourceMinLod);
+    ADD_FEATURE(parent_item, features, sparseBinding);
+    ADD_FEATURE(parent_item, features, sparseResidencyBuffer);
+    ADD_FEATURE(parent_item, features, sparseResidencyImage2D);
+    ADD_FEATURE(parent_item, features, sparseResidencyImage3D);
+    ADD_FEATURE(parent_item, features, sparseResidency2Samples);
+    ADD_FEATURE(parent_item, features, sparseResidency4Samples);
+    ADD_FEATURE(parent_item, features, sparseResidency8Samples);
+    ADD_FEATURE(parent_item, features, sparseResidency16Samples);
+    ADD_FEATURE(parent_item, features, sparseResidencyAliased);
+    ADD_FEATURE(parent_item, features, variableMultisampleRate);
+    ADD_FEATURE(parent_item, features, inheritedQueries);
+
+    parent_item->setExpanded(true);
+  }
+
+  // Device limits
+  {
+    QTreeWidgetItem* parent_item = new QTreeWidgetItem();
+    parent_item->setText(0, "Descriptor Indexing Features");
+    tw->addTopLevelItem(parent_item);
+
+    const VkPhysicalDeviceDescriptorIndexingFeaturesEXT& features = descriptor_indexing_features;
+    ADD_FEATURE(parent_item, features, shaderInputAttachmentArrayDynamicIndexing);
+    ADD_FEATURE(parent_item, features, shaderUniformTexelBufferArrayDynamicIndexing);
+    ADD_FEATURE(parent_item, features, shaderStorageTexelBufferArrayDynamicIndexing);
+    ADD_FEATURE(parent_item, features, shaderUniformBufferArrayNonUniformIndexing);
+    ADD_FEATURE(parent_item, features, shaderSampledImageArrayNonUniformIndexing);
+    ADD_FEATURE(parent_item, features, shaderStorageBufferArrayNonUniformIndexing);
+    ADD_FEATURE(parent_item, features, shaderStorageImageArrayNonUniformIndexing);
+    ADD_FEATURE(parent_item, features, shaderInputAttachmentArrayNonUniformIndexing);
+    ADD_FEATURE(parent_item, features, shaderUniformTexelBufferArrayNonUniformIndexing);
+    ADD_FEATURE(parent_item, features, shaderStorageTexelBufferArrayNonUniformIndexing);
+    ADD_FEATURE(parent_item, features, descriptorBindingUniformBufferUpdateAfterBind);
+    ADD_FEATURE(parent_item, features, descriptorBindingSampledImageUpdateAfterBind);
+    ADD_FEATURE(parent_item, features, descriptorBindingStorageImageUpdateAfterBind);
+    ADD_FEATURE(parent_item, features, descriptorBindingStorageBufferUpdateAfterBind);
+    ADD_FEATURE(parent_item, features, descriptorBindingUniformTexelBufferUpdateAfterBind);
+    ADD_FEATURE(parent_item, features, descriptorBindingStorageTexelBufferUpdateAfterBind);
+    ADD_FEATURE(parent_item, features, descriptorBindingUpdateUnusedWhilePending);
+    ADD_FEATURE(parent_item, features, descriptorBindingPartiallyBound);
+    ADD_FEATURE(parent_item, features, descriptorBindingVariableDescriptorCount);
+    ADD_FEATURE(parent_item, features, runtimeDescriptorArray);
+
+    parent_item->setExpanded(true);
+  }
 
   for (int i = 0; i < tw->columnCount(); ++i) {
     tw->resizeColumnToContents(i);
@@ -1034,6 +1138,7 @@ void MainWindow::on_gpus_currentIndexChanged(int index)
 
   mCurrentGpu = mGpus[index];
   populateGeneral(mCurrentGpu);
+  populateDeviceExtensions(mCurrentGpu);
   populateLimits(mCurrentGpu);
   populateSparse(mCurrentGpu);
   populateFeatures(mCurrentGpu);
@@ -1097,7 +1202,28 @@ void MainWindow::on_limitsFilter_textChanged(const QString &arg1)
 
 void MainWindow::on_formatFilter_textChanged(const QString &arg1)
 {
-  filterTreeWidgetItemsSimple("formatsWidget", arg1.trimmed());
+  QTreeWidget* tw = findChild<QTreeWidget*>("formatsWidget");
+  Q_ASSERT(tw);
+
+  const QString& filterText = arg1;
+  if (! filterText.isEmpty()) {
+    for (int parentIndex = 0; parentIndex < tw->topLevelItemCount(); ++parentIndex) {
+      auto parentItem = tw->topLevelItem(parentIndex);
+      auto parentText = parentItem->text(0);
+      bool parentVisible = parentText.contains(filterText, Qt::CaseInsensitive);
+      parentItem->setHidden(! parentVisible);
+    }
+  }
+  else {
+    for (int parentIndex = 0; parentIndex < tw->topLevelItemCount(); ++parentIndex) {
+      auto parentItem = tw->topLevelItem(parentIndex);
+      parentItem->setHidden(false);
+      for (int childIndex = 0; childIndex < parentItem->childCount(); ++childIndex) {
+        auto childItem = parentItem->child(childIndex);
+        childItem->setHidden(false);
+      }
+    }
+  }
 }
 
 void MainWindow::on_featuresFilter_textChanged(const QString &arg1)

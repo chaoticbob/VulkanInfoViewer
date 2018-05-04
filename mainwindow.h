@@ -29,7 +29,13 @@ private:
   Q_OBJECT
 public:
   using LayerExtensions = std::map<std::string, std::vector<VkExtensionProperties>>;
-  using GpuProperties = std::map<VkPhysicalDevice, VkPhysicalDeviceProperties>;
+
+  struct GpuPropertiesData {
+    VkPhysicalDeviceProperties                      device_properties;
+    VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptor_indexing_properties;
+    std::vector<VkExtensionProperties>              extensions;
+  };
+  using GpuProperties = std::map<VkPhysicalDevice, GpuPropertiesData>;
 
   explicit MainWindow(QWidget *parent = 0);
   ~MainWindow();  
@@ -77,12 +83,12 @@ private:
   void  enumerateInstanceExtensions();
   void  populateInstanceExtensions();
   void  enumerateDeviceExtensions();
-  void  populateDeviceExtensions();
 
   void  enumerateGpus();
   void  populateGpus();
 
   void  populateGeneral(VkPhysicalDevice gpu);
+  void  populateDeviceExtensions(VkPhysicalDevice gpu);
   void  populateLimits(VkPhysicalDevice gpu);
   void  populateSparse(VkPhysicalDevice gpu);
   void  populateFeatures(VkPhysicalDevice gpu);
@@ -98,7 +104,6 @@ private:
 
   std::vector<VkLayerProperties>      mInstanceLayers;
   LayerExtensions                     mInstanceLayerExtensions;
-  std::vector<VkExtensionProperties>  mDeviceExtensions;
 
   VkInstance                          mInstance = VK_NULL_HANDLE;
   VkSurfaceKHR                        mSurface = VK_NULL_HANDLE;

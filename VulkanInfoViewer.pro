@@ -42,7 +42,8 @@ win32:INCLUDEPATH += "$$(VULKAN_SDK)/Include"
 win32:LIBS += -L"$$(VULKAN_SDK)/Lib"
 win32:LIBS += -lvulkan-1
 
-DISTFILES +=
+DISTFILES += \
+    icons/Vulkan-2016-Transparent-bg.png
 
 RESOURCES += \
     VulkanInfoViewer.qrc
