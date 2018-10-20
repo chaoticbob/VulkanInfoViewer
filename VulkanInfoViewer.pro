@@ -34,13 +34,15 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-unix:INCLUDEPATH += "$$(VULKAN_SDK)/x86_64/include"
-unix:LIBS += -L"$$(VULKAN_SDK)/x86_64/lib"
+unix:INCLUDEPATH += "$$(VULKAN_SDK)/include"
+unix:LIBS += -L"$$(VULKAN_SDK)/lib"
 unix:LIBS += -lvulkan
 
 win32:INCLUDEPATH += "$$(VULKAN_SDK)/Include"
 win32:LIBS += -L"$$(VULKAN_SDK)/Lib"
 win32:LIBS += -lvulkan-1
+
+message("VULKAN_SDK:" $$(VULKAN_SDK))
 
 DISTFILES += \
     icons/Vulkan-2016-Transparent-bg.png
