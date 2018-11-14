@@ -174,10 +174,10 @@ void MainWindow::enumerateInstanceLayers()
   mInstanceLayers.resize(count);
   res = vkEnumerateInstanceLayerProperties(&count, mInstanceLayers.data());
   assert(res == VK_SUCCESS);
-  std::sort(std::begin(mInstanceLayers),
-      std::end(mInstanceLayers),
-      [](const VkLayerProperties& a, const VkLayerProperties& b) -> bool {
-          return (strcmp(a.layerName, b.layerName) < 0); });
+//  std::sort(std::begin(mInstanceLayers),
+//      std::end(mInstanceLayers),
+//      [](const VkLayerProperties& a, const VkLayerProperties& b) -> bool {
+//          return (strcmp(a.layerName, b.layerName) < 0); });
 }
 
 void MainWindow::populateInstanceLayers()
