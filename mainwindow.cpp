@@ -891,6 +891,7 @@ void MainWindow::populateMemory(VkPhysicalDevice gpu)
   // Memory types
   QTreeWidget* tw = findChild<QTreeWidget*>("memoryTypesWidget");
   Q_ASSERT(tw);
+  tw->clear();
   for (uint32_t i = 0; i < properties.memoryTypeCount; ++i) {
     const auto& type = properties.memoryTypes[i];
     auto item = new QTreeWidgetItem();
@@ -914,6 +915,7 @@ void MainWindow::populateMemory(VkPhysicalDevice gpu)
   QLocale locale;
   tw = findChild<QTreeWidget*>("memoryHeapsWidget");
   Q_ASSERT(tw);
+  tw->clear();
   for (uint32_t i = 0; i < properties.memoryHeapCount; ++i) {
     const auto& heap = properties.memoryHeaps[i];
     QString bytes = locale.toString(static_cast<qulonglong>(heap.size)) + " bytes";
