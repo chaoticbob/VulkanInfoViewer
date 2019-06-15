@@ -30,12 +30,22 @@ private:
 public:
   using LayerExtensions = std::map<std::string, std::vector<VkExtensionProperties>>;
 
-  struct GpuPropertiesData {
-    VkPhysicalDeviceProperties                      device_properties;
-    VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptor_indexing_properties;
+//  struct GpuPropertiesData {
+//    VkPhysicalDeviceProperties                      device_properties;
+//    VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptor_indexing_properties;
+//    std::vector<VkExtensionProperties>              extensions;
+//  };
+//  using GpuProperties = std::map<VkPhysicalDevice, GpuPropertiesData>;
+
+  struct GpuProperties {
+    VkPhysicalDevice                                physicalDevice;
+    VkPhysicalDeviceProperties                      deviceProperties;
+    VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties;
     std::vector<VkExtensionProperties>              extensions;
+    // Extra properties
+    VkPhysicalDeviceShaderCorePropertiesAMD         amdShaderCoreProperties;
+    std::string                                     description;
   };
-  using GpuProperties = std::map<VkPhysicalDevice, GpuPropertiesData>;
 
   explicit MainWindow(QWidget *parent = 0);
   ~MainWindow();  
@@ -85,19 +95,20 @@ private:
   void  enumerateDeviceExtensions();
 
   void  enumerateGpus();
+  QString getFullGpuName(const GpuProperties* pProperties) const;
   void  populateGpus();
 
-  void  populateGeneral(VkPhysicalDevice gpu);
-  void  populateDeviceExtensions(VkPhysicalDevice gpu);
-  void  populateLimits(VkPhysicalDevice gpu);
-  void  populateSparse(VkPhysicalDevice gpu);
-  void  populateFeatures(VkPhysicalDevice gpu);
-  void  populateSurface(VkPhysicalDevice gpu);
-  void  populateQueues(VkPhysicalDevice gpu);
-  void  populateMemory(VkPhysicalDevice gpu);
-  void  populateFormats(VkPhysicalDevice gpu);
+  void  populateGeneral(const GpuProperties* pGpuProperties);
+  void  populateDeviceExtensions(const GpuProperties* pGpuProperties);
+  void  populateLimits(const GpuProperties* pGpuProperties);
+  void  populateSparse(const GpuProperties* pGpuProperties);
+  void  populateFeatures(const GpuProperties* pGpuProperties);
+  void  populateSurface(const GpuProperties* pGpuProperties);
+  void  populateQueues(const GpuProperties* pGpuProperties);
+  void  populateMemory(const GpuProperties* pGpuProperties);
+  void  populateFormats(const GpuProperties* pGpuProperties);
 
-  void  updateSurfaceExtents(VkPhysicalDevice gpu);
+  void  updateSurfaceExtents(const GpuProperties* pGpuProperties);
 
 private:
   Ui::MainWindow *ui;
@@ -108,9 +119,8 @@ private:
   VkInstance                          mInstance = VK_NULL_HANDLE;
   VkSurfaceKHR                        mSurface = VK_NULL_HANDLE;
 
-  std::vector<VkPhysicalDevice>       mGpus;
-  VkPhysicalDevice                    mCurrentGpu = VK_NULL_HANDLE;
-  GpuProperties                       mGpuProperties;
+  std::vector<GpuProperties>          mGpuProperties;
+  const GpuProperties*                mCurrentGpuProperties = nullptr;
 
   struct FilterInputs {
     VkImageTiling tiling = static_cast<VkImageTiling>(UINT32_MAX);

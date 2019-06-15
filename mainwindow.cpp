@@ -14,6 +14,11 @@
 
 #include <QStandardItemModel>
 
+#define IHV_VENDOR_ID_AMD     0x1002
+#define IHV_VENDOR_ID_INTEL   0x8086
+#define IHV_VENDOR_ID_NVIDIA  0x10DE
+
+
 void HideItem(int row, QComboBox* cb)
 {
   cb->setItemData(row, QSize(0,0), Qt::SizeHintRole);
@@ -269,38 +274,120 @@ void MainWindow::populateInstanceExtensions()
 
 void MainWindow::enumerateGpus()
 {
-  uint32_t count = 0;
-  VkResult res = vkEnumeratePhysicalDevices(mInstance, &count, nullptr);
-  assert(res == VK_SUCCESS);
-  mGpus.resize(count);
-  res = vkEnumeratePhysicalDevices(mInstance, &count, mGpus.data());
-  assert(res == VK_SUCCESS);
+  // Enumerate physical devices
+  std::vector<VkPhysicalDevice> gpus;
+  {
+    uint32_t count = 0;
+    VkResult res = vkEnumeratePhysicalDevices(mInstance, &count, nullptr);
+    assert(res == VK_SUCCESS);
 
-  for (uint32_t i = 0; i < count; ++i) {
-    VkPhysicalDevice gpu = mGpus[i];
-    // Get device and descriptor indexing properties
-    VkPhysicalDeviceProperties2 properties = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
-    VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptor_indexing_properties
+    gpus.resize(count);
+    res = vkEnumeratePhysicalDevices(mInstance, &count, gpus.data());
+    assert(res == VK_SUCCESS);
+  }
+
+  // Allocate and copy physical device
+  mGpuProperties.resize(gpus.size());
+  for (size_t i = 0; i < gpus.size(); ++i) {
+    mGpuProperties[i].physicalDevice = gpus[i];
+  }
+
+  // Fill out GPU properties
+  for (size_t i = 0; i < mGpuProperties.size(); ++i) {
+    GpuProperties& gpuProperties = mGpuProperties[i];
+
+    // Use VkPhysicalDeviceProperties to get device an descriptor indexing properties
+    VkPhysicalDeviceProperties2 deviceProperties2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+    VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties
         = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT};
-    properties.pNext = &descriptor_indexing_properties;
-    vkGetPhysicalDeviceProperties2(mGpus[i], &properties);
-    mGpuProperties[gpu].device_properties = properties.properties;
-    mGpuProperties[gpu].descriptor_indexing_properties = descriptor_indexing_properties;
+    deviceProperties2.pNext = &gpuProperties.descriptorIndexingProperties;
+    // Call vkGetPhysicalDeviceProperties2
+    vkGetPhysicalDeviceProperties2(
+      gpuProperties.physicalDevice,
+      &deviceProperties2);
+
+    // Copy device properties
+    gpuProperties.deviceProperties = deviceProperties2.properties;
+
     // Get device extensions
     {
       uint32_t count = 0;
-      VkResult res = vkEnumerateDeviceExtensionProperties(gpu, nullptr, &count, nullptr);
+      VkResult res = vkEnumerateDeviceExtensionProperties(
+        gpuProperties.physicalDevice,
+        nullptr,
+        &count,
+        nullptr);
       assert(res == VK_SUCCESS);
 
-      mGpuProperties[gpu].extensions.resize(count);
-      res = vkEnumerateDeviceExtensionProperties(gpu, nullptr, &count, mGpuProperties[mGpus[i]].extensions.data());
+      gpuProperties.extensions.resize(count);
+      res = vkEnumerateDeviceExtensionProperties(
+        gpuProperties.physicalDevice,
+        nullptr,
+        &count,
+        gpuProperties.extensions.data());
       assert(res == VK_SUCCESS);
-      std::sort(std::begin(mGpuProperties[mGpus[i]].extensions),
-          std::end(mGpuProperties[mGpus[i]].extensions),
-          [](const VkExtensionProperties& a, const VkExtensionProperties& b) -> bool {
-              return (strcmp(a.extensionName, b.extensionName) < 0); });
+
+      std::sort(
+        std::begin(gpuProperties.extensions),
+        std::end(gpuProperties.extensions),
+        [](const VkExtensionProperties& a, const VkExtensionProperties& b) -> bool {
+          return (strcmp(a.extensionName, b.extensionName) < 0); });
+    }
+
+    // Get AMD shader core properties
+    if (gpuProperties.deviceProperties.vendorID == IHV_VENDOR_ID_AMD) {
+      auto it = std::find_if(
+        std::begin(gpuProperties.extensions),
+        std::end(gpuProperties.extensions),
+        [](const VkExtensionProperties& elem) -> bool {
+          return std::string(elem.extensionName) == VK_AMD_SHADER_CORE_PROPERTIES_EXTENSION_NAME; });
+
+      if (it != std::end(gpuProperties.extensions)) {
+        VkPhysicalDeviceProperties2 deviceProperties2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+        gpuProperties.amdShaderCoreProperties = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD};
+        deviceProperties2.pNext = &gpuProperties.amdShaderCoreProperties;
+        // Call vkGetPhysicalDeviceProperties2
+        vkGetPhysicalDeviceProperties2(
+          gpuProperties.physicalDevice,
+          &deviceProperties2);
+      }
+    }
+
+    // Description
+    gpuProperties.description = gpuProperties.deviceProperties.deviceName;
+    if (gpuProperties.deviceProperties.vendorID == IHV_VENDOR_ID_AMD) {
+      std::stringstream ss;
+      ss << "AMD" << " ";
+      ss << gpuProperties.deviceProperties.deviceName << " ";
+      ss << "(";
+      ss << gpuProperties.amdShaderCoreProperties.shaderEngineCount *
+            gpuProperties.amdShaderCoreProperties.shaderArraysPerEngineCount *
+            gpuProperties.amdShaderCoreProperties.computeUnitsPerShaderArray;
+      ss << " Cores)";
+      gpuProperties.description = ss.str();
+    }
+    else if(gpuProperties.deviceProperties.vendorID = IHV_VENDOR_ID_INTEL) {
+      std::stringstream ss;
+      ss << "Intel" << " ";
+      ss << gpuProperties.deviceProperties.deviceName;
+      gpuProperties.description = ss.str();
+    }
+    else if(gpuProperties.deviceProperties.vendorID = IHV_VENDOR_ID_NVIDIA) {
+      std::stringstream ss;
+      ss << "NVIDIA" << " ";
+      ss << gpuProperties.deviceProperties.deviceName;
+      gpuProperties.description = ss.str();
     }
   }
+}
+
+QString MainWindow::getFullGpuName(const GpuProperties* pGpuProperties) const
+{
+  QString fullDeviceName = QString::fromUtf8(pGpuProperties->deviceProperties.deviceName);
+  if (pGpuProperties->physicalDevice != VK_NULL_HANDLE) {
+
+  }
+  return fullDeviceName;
 }
 
 void MainWindow::populateGpus()
@@ -310,22 +397,23 @@ void MainWindow::populateGpus()
 
   cb->clear();
 
-  for (const auto& it : mGpuProperties) {
-    const auto& properties = it.second.device_properties;
-    cb->addItem(QString::fromUtf8(properties.deviceName));
+  for (size_t i = 0; i < mGpuProperties.size(); ++i) {
+    GpuProperties* pGpuProperties = &mGpuProperties[i];
+    QString deviceName = QString::fromStdString(pGpuProperties->description);
+    void* pUserData = static_cast<void*>(pGpuProperties);
+    cb->addItem(deviceName, qVariantFromValue(pUserData));
   }
 }
 
-void MainWindow::populateGeneral(VkPhysicalDevice gpu)
+void MainWindow::populateGeneral(const GpuProperties* pGpuProperties)
 {
-  auto it = mGpuProperties.find(gpu);
-  if (it == mGpuProperties.end()) {
-    return;
-  }
+  const VkPhysicalDeviceProperties& properties = pGpuProperties->deviceProperties;
 
-  const VkPhysicalDeviceProperties& properties = it->second.device_properties;
+  QLabel* lb = findChild<QLabel*>("descriptionValue");
+  Q_ASSERT(lb);
+  lb->setText(QString::fromStdString(pGpuProperties->description));
 
-  QLabel* lb = findChild<QLabel*>("apiVersionValue");
+  lb = findChild<QLabel*>("apiVersionValue");
   Q_ASSERT(lb);
   lb->setText(toStringVersion(properties.apiVersion));
 
@@ -358,14 +446,14 @@ void MainWindow::populateGeneral(VkPhysicalDevice gpu)
   lb->setText(uuid.toUpper());
 }
 
-void MainWindow::populateDeviceExtensions(VkPhysicalDevice gpu)
+void MainWindow::populateDeviceExtensions(const GpuProperties* pGpuProperties)
 {
   QTreeWidget* tw = findChild<QTreeWidget*>("deviceExtensionsWidget");
   Q_ASSERT(tw);
 
   tw->clear();
 
-  auto& extension = mGpuProperties[gpu].extensions;
+  auto& extension = pGpuProperties->extensions;
   for (const auto& extension : extension) {
     QTreeWidgetItem* topItem = new QTreeWidgetItem();
     topItem->setText(0, QString::fromUtf8(extension.extensionName));
@@ -390,20 +478,12 @@ void MainWindow::populateDeviceExtensions(VkPhysicalDevice gpu)
     parent->addChild(item);                                                  \
   }
 
-void MainWindow::populateLimits(VkPhysicalDevice gpu)
+void MainWindow::populateLimits(const GpuProperties* pGpuProperties)
 {
-  assert(gpu != VK_NULL_HANDLE);
-
   QTreeWidget* tw = findChild<QTreeWidget*>("limitsWidget");
   Q_ASSERT(tw);
 
   tw->clear();
-
-  auto it = mGpuProperties.find(gpu);
-  if (it == mGpuProperties.end()) {
-    return;
-  }
-
 
   QLocale locale;
 
@@ -413,7 +493,7 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
     parent_item->setText(0, "Device Limits");
     tw->addTopLevelItem(parent_item);
 
-    const auto &limits = it->second.device_properties.limits;
+    const auto &limits = pGpuProperties->deviceProperties.limits;
 
     ADD_LIMIT(locale, parent_item, limits, maxImageDimension1D);
     ADD_LIMIT(locale, parent_item, limits, maxImageDimension2D);
@@ -533,7 +613,7 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
     parent_item->setText(0, "Descriptor Indexing Limits");
     tw->addTopLevelItem(parent_item);
 
-    const auto &limits = it->second.descriptor_indexing_properties;
+    const auto &limits = pGpuProperties->descriptorIndexingProperties;
 
     ADD_LIMIT(locale, parent_item, limits, maxUpdateAfterBindDescriptorsInAllPools);
     ADD_LIMIT(locale, parent_item, limits, shaderUniformBufferArrayNonUniformIndexingNative);
@@ -576,21 +656,16 @@ void MainWindow::populateLimits(VkPhysicalDevice gpu)
     tw->addTopLevelItem(item);                                \
   }
 
-void MainWindow::populateSparse(VkPhysicalDevice gpu)
+void MainWindow::populateSparse(const GpuProperties* pGpuProperties)
 {
-  assert(gpu != VK_NULL_HANDLE);
+  VkPhysicalDevice gpu = pGpuProperties->physicalDevice;
 
   QTreeWidget* tw = findChild<QTreeWidget*>("sparsePropertiesWidget");
   Q_ASSERT(tw);
 
   tw->clear();
 
-  auto it = mGpuProperties.find(gpu);
-  if (it == mGpuProperties.end()) {
-    return;
-  }
-
-  const auto &sparseProperties = it->second.device_properties.sparseProperties;
+  const auto &sparseProperties = pGpuProperties->deviceProperties.sparseProperties;
 
   ADD_SPARSE(tw, sparseProperties, residencyStandard2DBlockShape);
   ADD_SPARSE(tw, sparseProperties, residencyStandard2DMultisampleBlockShape);
@@ -612,9 +687,9 @@ void MainWindow::populateSparse(VkPhysicalDevice gpu)
     parent->addChild(item);                                   \
   }
 
-void MainWindow::populateFeatures(VkPhysicalDevice gpu)
-{
-  assert(gpu != VK_NULL_HANDLE);
+void MainWindow::populateFeatures(const GpuProperties* pGpuProperties)
+{  
+  VkPhysicalDevice gpu = pGpuProperties->physicalDevice;
 
   QTreeWidget* tw = findChild<QTreeWidget*>("featuresWidget");
   Q_ASSERT(tw);
@@ -743,8 +818,10 @@ void setLabelValue(QLabel* lb, const VkExtent2D& value)
   lb->setText("(" + QString::number(value.width) + ", " + QString::number(value.height) +")");
 }
 
-void MainWindow::updateSurfaceExtents(VkPhysicalDevice gpu)
+void MainWindow::updateSurfaceExtents(const GpuProperties* pGpuProperties)
 {
+  VkPhysicalDevice gpu = pGpuProperties->physicalDevice;
+
   VkSurfaceCapabilitiesKHR surfCaps = {};
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, mSurface, &surfCaps);
 
@@ -753,8 +830,10 @@ void MainWindow::updateSurfaceExtents(VkPhysicalDevice gpu)
   setLabelValue(findChild<QLabel*>("currentExtentValue"), surfCaps.currentExtent);
 }
 
-void MainWindow::populateSurface(VkPhysicalDevice gpu)
+void MainWindow::populateSurface(const GpuProperties* pGpuProperties)
 {
+  VkPhysicalDevice gpu = pGpuProperties->physicalDevice;
+
   VkSurfaceCapabilitiesKHR surfCaps = {};
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, mSurface, &surfCaps);
 
@@ -769,7 +848,7 @@ void MainWindow::populateSurface(VkPhysicalDevice gpu)
   setLabelValue(findChild<QLabel*>("maxImageCountValue"), surfCaps.maxImageCount);
   setLabelValue(findChild<QLabel*>("maxImageArrayLayersValue"), surfCaps.maxImageArrayLayers);
 
-  updateSurfaceExtents(gpu);
+  updateSurfaceExtents(pGpuProperties);
 
   // Present modes
   res = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, mSurface, &count, nullptr);
@@ -849,8 +928,10 @@ void MainWindow::populateSurface(VkPhysicalDevice gpu)
   }
 }
 
-void MainWindow::populateQueues(VkPhysicalDevice gpu)
+void MainWindow::populateQueues(const GpuProperties* pGpuProperties)
 {
+  VkPhysicalDevice gpu = pGpuProperties->physicalDevice;
+
   uint32_t count = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(gpu, &count, nullptr);
   std::vector<VkQueueFamilyProperties> properties(count);
@@ -883,8 +964,10 @@ void MainWindow::populateQueues(VkPhysicalDevice gpu)
   }
 }
 
-void MainWindow::populateMemory(VkPhysicalDevice gpu)
+void MainWindow::populateMemory(const GpuProperties* pGpuProperties)
 {
+  VkPhysicalDevice gpu = pGpuProperties->physicalDevice;
+
   VkPhysicalDeviceMemoryProperties properties = {};
   vkGetPhysicalDeviceMemoryProperties(gpu, &properties);
 
@@ -1080,8 +1163,10 @@ void updateImageFormats(
   }
 }
 
-void MainWindow::populateFormats(VkPhysicalDevice gpu)
+void MainWindow::populateFormats(const GpuProperties* pGpuProperties)
 {
+  VkPhysicalDevice gpu = pGpuProperties->physicalDevice;
+
   uint32_t start = static_cast<uint32_t>(VK_FORMAT_BEGIN_RANGE);
   uint32_t end = static_cast<uint32_t>(VK_FORMAT_END_RANGE);
 
@@ -1134,20 +1219,23 @@ void MainWindow::populateFormats(VkPhysicalDevice gpu)
 
 void MainWindow::on_gpus_currentIndexChanged(int index)
 {
-  if (static_cast<size_t>(index) >= mGpus.size()) {
-    return;
-  }
+  (void)index;
 
-  mCurrentGpu = mGpus[index];
-  populateGeneral(mCurrentGpu);
-  populateDeviceExtensions(mCurrentGpu);
-  populateLimits(mCurrentGpu);
-  populateSparse(mCurrentGpu);
-  populateFeatures(mCurrentGpu);
-  populateSurface(mCurrentGpu);
-  populateQueues(mCurrentGpu);
-  populateMemory(mCurrentGpu);
-  populateFormats(mCurrentGpu);
+  QComboBox* cb = findChild<QComboBox*>("gpus");
+  Q_ASSERT(cb);
+
+  void* pUserData = cb->itemData(index).value<void*>();
+  mCurrentGpuProperties = static_cast<const GpuProperties*>(pUserData);
+
+  populateGeneral(mCurrentGpuProperties);
+  populateDeviceExtensions(mCurrentGpuProperties);
+  populateLimits(mCurrentGpuProperties);
+  populateSparse(mCurrentGpuProperties);
+  populateFeatures(mCurrentGpuProperties);
+  populateSurface(mCurrentGpuProperties);
+  populateQueues(mCurrentGpuProperties);
+  populateMemory(mCurrentGpuProperties);
+  populateFormats(mCurrentGpuProperties);
 }
 
 void MainWindow::filterTreeWidgetItemsSimple(const QString &widgetName, const QString &filterText)
@@ -1194,7 +1282,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
   destroyVulkanSurface();
   createVulkanSurface();
 
-  updateSurfaceExtents(mCurrentGpu);
+  updateSurfaceExtents(mCurrentGpuProperties);
 }
 
 void MainWindow::on_limitsFilter_textChanged(const QString &arg1)
@@ -1284,7 +1372,7 @@ void MainWindow::on_itemChanged(QStandardItem *item)
   VkImageTiling tiling = inputs->tiling;
   VkImageUsageFlags usageFlags = getUsageFlags(inputs->usageFlagsFilter);
   VkImageCreateFlags createFlags = getCreateFlags(inputs->createFlagsFilter);
-  updateImageFormats(mCurrentGpu, tw, type, tiling, usageFlags, createFlags);
+  updateImageFormats(mCurrentGpuProperties->physicalDevice, tw, type, tiling, usageFlags, createFlags);
 }
 
 void MainWindow::on_tilingLinearImageType_currentIndexChanged(int index)
@@ -1295,7 +1383,7 @@ void MainWindow::on_tilingLinearImageType_currentIndexChanged(int index)
   VkImageTiling tiling = inputs->tiling;
   VkImageUsageFlags usageFlags = getUsageFlags(inputs->usageFlagsFilter);
   VkImageCreateFlags createFlags = getCreateFlags(inputs->createFlagsFilter);
-  updateImageFormats(mCurrentGpu, tw, type, tiling, usageFlags, createFlags);
+  updateImageFormats(mCurrentGpuProperties->physicalDevice, tw, type, tiling, usageFlags, createFlags);
 }
 
 void MainWindow::on_tilingOptimalImageType_currentIndexChanged(int index)
@@ -1306,7 +1394,7 @@ void MainWindow::on_tilingOptimalImageType_currentIndexChanged(int index)
   VkImageTiling tiling = inputs->tiling;
   VkImageUsageFlags usageFlags = getUsageFlags(inputs->usageFlagsFilter);
   VkImageCreateFlags createFlags = getCreateFlags(inputs->createFlagsFilter);
-  updateImageFormats(mCurrentGpu, tw, type, tiling, usageFlags, createFlags);
+  updateImageFormats(mCurrentGpuProperties->physicalDevice, tw, type, tiling, usageFlags, createFlags);
 }
 
 void MainWindow::on_tilingLinearFormatFilter_textChanged(const QString &arg1)
