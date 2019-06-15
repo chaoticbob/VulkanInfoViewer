@@ -297,9 +297,8 @@ void MainWindow::enumerateGpus()
     GpuProperties& gpuProperties = mGpuProperties[i];
 
     // Use VkPhysicalDeviceProperties to get device an descriptor indexing properties
-    VkPhysicalDeviceProperties2 deviceProperties2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
-    VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties
-        = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT};
+    VkPhysicalDeviceProperties2 deviceProperties2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
+    gpuProperties.descriptorIndexingProperties = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT};
     deviceProperties2.pNext = &gpuProperties.descriptorIndexingProperties;
     // Call vkGetPhysicalDeviceProperties2
     vkGetPhysicalDeviceProperties2(
