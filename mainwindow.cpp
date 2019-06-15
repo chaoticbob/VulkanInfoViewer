@@ -366,13 +366,13 @@ void MainWindow::enumerateGpus()
       ss << " Cores)";
       gpuProperties.description = ss.str();
     }
-    else if(gpuProperties.deviceProperties.vendorID = IHV_VENDOR_ID_INTEL) {
+    else if(gpuProperties.deviceProperties.vendorID == IHV_VENDOR_ID_INTEL) {
       std::stringstream ss;
       ss << "Intel" << " ";
       ss << gpuProperties.deviceProperties.deviceName;
       gpuProperties.description = ss.str();
     }
-    else if(gpuProperties.deviceProperties.vendorID = IHV_VENDOR_ID_NVIDIA) {
+    else if(gpuProperties.deviceProperties.vendorID == IHV_VENDOR_ID_NVIDIA) {
       std::stringstream ss;
       ss << "NVIDIA" << " ";
       ss << gpuProperties.deviceProperties.deviceName;
