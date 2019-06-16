@@ -39,11 +39,84 @@ public:
 
   struct GpuProperties {
     VkPhysicalDevice                                physicalDevice;
-    VkPhysicalDeviceProperties                      deviceProperties;
-    VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties;
-    std::vector<VkExtensionProperties>              extensions;
+    std::vector<VkExtensionProperties>              deviceExtensions;
+    // Properties
+    VkPhysicalDeviceProperties                              deviceProperties;
+    VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT     blendOperationAdvancedProperties;
+    VkPhysicalDeviceDiscardRectanglePropertiesEXT           discardRectangleProperties;
+    VkPhysicalDeviceConservativeRasterizationPropertiesEXT  conservativeRasterizationProperties;
+    VkPhysicalDeviceDepthStencilResolvePropertiesKHR        depthStencilResolveProperties;
+    VkPhysicalDeviceDescriptorIndexingPropertiesEXT         descriptorIndexingProperties;
+    VkPhysicalDeviceExternalMemoryHostPropertiesEXT         externalMemoryHostProperties;
+    VkPhysicalDeviceFloatControlsPropertiesKHR              floatControlsProperties;
+    VkPhysicalDeviceFragmentDensityMapPropertiesEXT         fragmentDensityMapProperties;
+    VkPhysicalDeviceInlineUniformBlockPropertiesEXT         inlineUniformBlockProperties;
+    VkPhysicalDeviceMaintenance3Properties                  maintenance3Properties;
+    VkMultisamplePropertiesEXT                              multisampleProperties;
+    VkPhysicalDeviceMultiviewProperties                     multiviewProperties;
+    VkPhysicalDevicePointClippingProperties                 pointClippingProperties;
+    VkPhysicalDeviceProtectedMemoryProperties               protectedMemoryProperties;
+    VkPhysicalDevicePushDescriptorPropertiesKHR             pushDescriptorProperties;
+    VkPhysicalDeviceSamplerFilterMinmaxPropertiesEXT        samplerFilterMinmaxProperties;
+    VkPhysicalDeviceSampleLocationsPropertiesEXT            sampleLocationsProperties;
+    VkPhysicalDeviceSubgroupProperties                      subgroupProperties;
+    VkPhysicalDeviceTransformFeedbackPropertiesEXT          transformFeedbackProperties;
+    VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT     vertexAttributeDivisorProperties;
+    // AMD properties
+    VkPhysicalDeviceShaderCorePropertiesAMD                 amdShaderCoreProperties;
+    // NVIDIA properties
+    VkPhysicalDeviceCooperativeMatrixPropertiesNV           nvCooperativeMatrixProperties;
+    VkPhysicalDeviceMeshShaderPropertiesNV                  nvMeshShaderProperties;
+    VkPhysicalDeviceMultiviewPerViewAttributesPropertiesNVX nvMultiviewPerViewAttributesProperties;
+    VkPhysicalDeviceRayTracingPropertiesNV                  nvRayTracingProperties;
+    //VkPhysicalDeviceShaderSMBuiltinsPropertiesNV            nvShaderSMBuiltinsProperties;
+    VkPhysicalDeviceShadingRateImagePropertiesNV            nvShadingRateImageProperties;
+
+    // Features
+    VkPhysicalDeviceFeatures                                deviceFeatures;
+    VkPhysicalDevice8BitStorageFeaturesKHR                  _8BitStorageFeatures;
+    VkPhysicalDevice16BitStorageFeatures                    _16BitStorageFeatures;
+    VkPhysicalDeviceASTCDecodeFeaturesEXT                   astcDecodeFeatures;
+    VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT       blendOperationAdvancedFeatures;
+    VkPhysicalDeviceBufferDeviceAddressFeaturesEXT          bufferDeviceAddressFeatures;
+    VkPhysicalDeviceConditionalRenderingFeaturesEXT         conditionalRenderingFeatures;
+    VkPhysicalDeviceDepthClipEnableFeaturesEXT              depthClipEnableFeatures;
+    VkPhysicalDeviceDescriptorIndexingFeaturesEXT           descriptorIndexingFeatures;
+    VkPhysicalDeviceFragmentDensityMapFeaturesEXT           fragmentDensityMapFeatures;
+    //VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT      fragmentShaderInterlockFeatures;
+    VkPhysicalDeviceFloat16Int8FeaturesKHR                  float16Int8Features;
+    VkPhysicalDeviceHostQueryResetFeaturesEXT               hostQueryResetFeatures;
+    VkPhysicalDeviceInlineUniformBlockFeaturesEXT           inlineUniformBlockFeatures;
+    VkPhysicalDeviceMemoryPriorityFeaturesEXT               memoryPriorityFeatures;
+    VkPhysicalDeviceMultiviewFeatures                       multiviewFeatures;
+    VkPhysicalDeviceProtectedMemoryFeatures                 protectedMemoryFeatures;
+    VkPhysicalDeviceSamplerYcbcrConversionFeatures          samplerYcbcrConversionFeatures;
+    VkPhysicalDeviceScalarBlockLayoutFeaturesEXT            scalarBlockLayoutFeatures;
+    VkPhysicalDeviceShaderAtomicInt64FeaturesKHR            shaderAtomicInt64Features;
+    VkPhysicalDeviceShaderDrawParametersFeatures            shaderDrawParametersFeature;
+    VkPhysicalDeviceTransformFeedbackFeaturesEXT            transformFeedbackFeatures;
+    VkPhysicalDeviceUniformBufferStandardLayoutFeaturesKHR  uniformBufferStandardLayoutFeatures;
+    VkPhysicalDeviceVariablePointersFeaturesKHR             variablePointersFeatures;
+    VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT       vertexAttributeDivisorFeatures;
+    VkPhysicalDeviceVulkanMemoryModelFeaturesKHR            vulkanMemoryModelFeatures;
+    VkPhysicalDeviceYcbcrImageArraysFeaturesEXT             ycbcrImageArraysFeatures;
+    // Intel
+    //VkPhysicalDeviceShaderIntegerFunctions2INTEL                intelShaderIntegerFunctions2;
+    // NVIDIA features
+    VkPhysicalDeviceComputeShaderDerivativesFeaturesNV          nvComputeShaderDerivativesFeatures;
+    VkPhysicalDeviceCooperativeMatrixFeaturesNV                 nvCooperativeMatrixFeatures;
+    VkPhysicalDeviceCornerSampledImageFeaturesNV                nvCornerSampledImageFeatures;
+    VkPhysicalDeviceCoverageReductionModeFeaturesNV             nvCoverageReductionModeFeatures;
+    VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV  nvDedicatedAllocationImageAliasingFeatures;
+    VkPhysicalDeviceExclusiveScissorFeaturesNV                  nvExclusiveScissorFeatures;
+    VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV         nvFragmentShaderBarycentricFeatures;
+    VkPhysicalDeviceShaderImageFootprintFeaturesNV              nvShaderImageFootprintFeatures;
+    //VkPhysicalDeviceShaderSMBuiltinsFeaturesNV                  nvShaderSMBuiltinsFeatures;
+    VkPhysicalDeviceShadingRateImageFeaturesNV                  nvShadingRateImageFeatures;
+    VkPhysicalDeviceMeshShaderFeaturesNV                        nvMeshShaderFeatures;
+    VkPhysicalDeviceRepresentativeFragmentTestFeaturesNV        nvRepresentativeFragmentTestFeatures;
+
     // Extra properties
-    VkPhysicalDeviceShaderCorePropertiesAMD         amdShaderCoreProperties;
     std::string                                     description;
   };
 
@@ -94,11 +167,15 @@ private:
   void  populateInstanceExtensions();
   void  enumerateDeviceExtensions();
 
+  void  queryDeviceExtensions(GpuProperties* pGpuProperties) const;
+  void  queryDescriptorIndexing(GpuProperties* pGpuProperties) const;
+  void  queryVariablePointers(GpuProperties* pGpuProperties) const;
+  void  queryAmdShaderCoreProperties(GpuProperties* pGpuProperties) const;
   void  enumerateGpus();
-  QString getFullGpuName(const GpuProperties* pProperties) const;
   void  populateGpus();
 
   void  populateGeneral(const GpuProperties* pGpuProperties);
+  void  populateAmdShaderCoreProperties(const GpuProperties* pGpuProperties);
   void  populateDeviceExtensions(const GpuProperties* pGpuProperties);
   void  populateLimits(const GpuProperties* pGpuProperties);
   void  populateSparse(const GpuProperties* pGpuProperties);

@@ -272,6 +272,88 @@ void MainWindow::populateInstanceExtensions()
   }
 }
 
+void MainWindow::queryDeviceExtensions(GpuProperties* pGpuProperties) const
+{
+  uint32_t count = 0;
+  VkResult res = vkEnumerateDeviceExtensionProperties(
+    pGpuProperties->physicalDevice,
+    nullptr,
+    &count,
+    nullptr);
+  assert(res == VK_SUCCESS);
+
+  pGpuProperties->deviceExtensions.resize(count);
+  res = vkEnumerateDeviceExtensionProperties(
+    pGpuProperties->physicalDevice,
+    nullptr,
+    &count,
+    pGpuProperties->deviceExtensions.data());
+  assert(res == VK_SUCCESS);
+
+  std::sort(
+    std::begin(pGpuProperties->deviceExtensions),
+    std::end(pGpuProperties->deviceExtensions),
+    [](const VkExtensionProperties& a, const VkExtensionProperties& b) -> bool {
+      return (strcmp(a.extensionName, b.extensionName) < 0); });
+}
+
+void MainWindow::queryDescriptorIndexing(GpuProperties* pGpuProperties) const
+{
+  // Properties
+  {
+    VkPhysicalDeviceProperties2 deviceProperties2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
+    pGpuProperties->descriptorIndexingProperties = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT};
+    deviceProperties2.pNext = &pGpuProperties->descriptorIndexingProperties;
+
+    vkGetPhysicalDeviceProperties2(
+      pGpuProperties->physicalDevice,
+      &deviceProperties2);
+  }
+
+  // Features
+  {
+    VkPhysicalDeviceFeatures2 deviceFeatures2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+    pGpuProperties->descriptorIndexingFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT};
+    deviceFeatures2.pNext = &pGpuProperties->descriptorIndexingFeatures;
+
+    vkGetPhysicalDeviceFeatures2(
+      pGpuProperties->physicalDevice,
+      &deviceFeatures2);
+  }
+}
+
+void MainWindow::queryVariablePointers(MainWindow::GpuProperties *pGpuProperties) const
+{
+  VkPhysicalDeviceFeatures2 deviceFeatures2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES};
+  pGpuProperties->variablePointersFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT};
+  deviceFeatures2.pNext = &pGpuProperties->variablePointersFeatures;
+
+  vkGetPhysicalDeviceFeatures2(
+    pGpuProperties->physicalDevice,
+    &deviceFeatures2);
+}
+
+void MainWindow::queryAmdShaderCoreProperties(MainWindow::GpuProperties *pGpuProperties) const
+{
+  if (pGpuProperties->deviceProperties.vendorID == IHV_VENDOR_ID_AMD) {
+    auto it = std::find_if(
+      std::begin(pGpuProperties->deviceExtensions),
+      std::end(pGpuProperties->deviceExtensions),
+      [](const VkExtensionProperties& elem) -> bool {
+        return std::string(elem.extensionName) == VK_AMD_SHADER_CORE_PROPERTIES_EXTENSION_NAME; });
+
+    if (it != std::end(pGpuProperties->deviceExtensions)) {
+      VkPhysicalDeviceProperties2 deviceProperties2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+      pGpuProperties->amdShaderCoreProperties = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD};
+      deviceProperties2.pNext = &pGpuProperties->amdShaderCoreProperties;
+      // Call vkGetPhysicalDeviceProperties2
+      vkGetPhysicalDeviceProperties2(
+        pGpuProperties->physicalDevice,
+        &deviceProperties2);
+    }
+  }
+}
+
 void MainWindow::enumerateGpus()
 {
   // Enumerate physical devices
@@ -289,6 +371,7 @@ void MainWindow::enumerateGpus()
   // Allocate and copy physical device
   mGpuProperties.resize(gpus.size());
   for (size_t i = 0; i < gpus.size(); ++i) {
+    memset(&mGpuProperties[i], 0, sizeof(mGpuProperties[i]));
     mGpuProperties[i].physicalDevice = gpus[i];
   }
 
@@ -296,61 +379,24 @@ void MainWindow::enumerateGpus()
   for (size_t i = 0; i < mGpuProperties.size(); ++i) {
     GpuProperties& gpuProperties = mGpuProperties[i];
 
-    // Use VkPhysicalDeviceProperties to get device an descriptor indexing properties
-    VkPhysicalDeviceProperties2 deviceProperties2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
-    gpuProperties.descriptorIndexingProperties = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT};
-    deviceProperties2.pNext = &gpuProperties.descriptorIndexingProperties;
-    // Call vkGetPhysicalDeviceProperties2
-    vkGetPhysicalDeviceProperties2(
-      gpuProperties.physicalDevice,
-      &deviceProperties2);
-
-    // Copy device properties
-    gpuProperties.deviceProperties = deviceProperties2.properties;
-
     // Get device extensions
-    {
-      uint32_t count = 0;
-      VkResult res = vkEnumerateDeviceExtensionProperties(
-        gpuProperties.physicalDevice,
-        nullptr,
-        &count,
-        nullptr);
-      assert(res == VK_SUCCESS);
+    queryDeviceExtensions(&gpuProperties);
 
-      gpuProperties.extensions.resize(count);
-      res = vkEnumerateDeviceExtensionProperties(
-        gpuProperties.physicalDevice,
-        nullptr,
-        &count,
-        gpuProperties.extensions.data());
-      assert(res == VK_SUCCESS);
+    // Get device properties
+    vkGetPhysicalDeviceProperties(
+      gpuProperties.physicalDevice,
+      &gpuProperties.deviceProperties);
 
-      std::sort(
-        std::begin(gpuProperties.extensions),
-        std::end(gpuProperties.extensions),
-        [](const VkExtensionProperties& a, const VkExtensionProperties& b) -> bool {
-          return (strcmp(a.extensionName, b.extensionName) < 0); });
-    }
+    // Get device featuers
+    vkGetPhysicalDeviceFeatures(
+      gpuProperties.physicalDevice,
+      &gpuProperties.deviceFeatures);
+
+    // Get descriptor indexing properties
+    queryDescriptorIndexing(&gpuProperties);
 
     // Get AMD shader core properties
-    if (gpuProperties.deviceProperties.vendorID == IHV_VENDOR_ID_AMD) {
-      auto it = std::find_if(
-        std::begin(gpuProperties.extensions),
-        std::end(gpuProperties.extensions),
-        [](const VkExtensionProperties& elem) -> bool {
-          return std::string(elem.extensionName) == VK_AMD_SHADER_CORE_PROPERTIES_EXTENSION_NAME; });
-
-      if (it != std::end(gpuProperties.extensions)) {
-        VkPhysicalDeviceProperties2 deviceProperties2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
-        gpuProperties.amdShaderCoreProperties = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD};
-        deviceProperties2.pNext = &gpuProperties.amdShaderCoreProperties;
-        // Call vkGetPhysicalDeviceProperties2
-        vkGetPhysicalDeviceProperties2(
-          gpuProperties.physicalDevice,
-          &deviceProperties2);
-      }
-    }
+    queryAmdShaderCoreProperties(&gpuProperties);
 
     // Description
     gpuProperties.description = gpuProperties.deviceProperties.deviceName;
@@ -378,15 +424,6 @@ void MainWindow::enumerateGpus()
       gpuProperties.description = ss.str();
     }
   }
-}
-
-QString MainWindow::getFullGpuName(const GpuProperties* pGpuProperties) const
-{
-  QString fullDeviceName = QString::fromUtf8(pGpuProperties->deviceProperties.deviceName);
-  if (pGpuProperties->physicalDevice != VK_NULL_HANDLE) {
-
-  }
-  return fullDeviceName;
 }
 
 void MainWindow::populateGpus()
@@ -445,6 +482,51 @@ void MainWindow::populateGeneral(const GpuProperties* pGpuProperties)
   lb->setText(uuid.toUpper());
 }
 
+#define ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, prop)               \
+  {                                                                          \
+    QTreeWidgetItem* item = new QTreeWidgetItem();                           \
+    item->setText(0, QString::fromUtf8(#prop));                              \
+    item->setText(1, locale.toString(static_cast<qulonglong>(object.prop))); \
+    item->setTextAlignment(1, Qt::AlignRight);                               \
+    tw->addTopLevelItem(item);                                               \
+  }
+
+void MainWindow::populateAmdShaderCoreProperties(const MainWindow::GpuProperties *pGpuProperties)
+{
+  QTreeWidget* tw = findChild<QTreeWidget*>("amdShaderCoreProperties");
+  Q_ASSERT(tw);
+
+  tw->clear();
+
+  const VkPhysicalDeviceProperties& properties = pGpuProperties->deviceProperties;
+  if (properties.vendorID != IHV_VENDOR_ID_AMD) {
+    return;
+  }
+
+  QLocale locale;
+
+  auto& object = pGpuProperties->amdShaderCoreProperties;
+
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, shaderEngineCount);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, shaderArraysPerEngineCount);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, computeUnitsPerShaderArray);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, simdPerComputeUnit);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, wavefrontsPerSimd);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, wavefrontSize);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, sgprsPerSimd);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, minSgprAllocation);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, maxSgprAllocation);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, sgprAllocationGranularity);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, vgprsPerSimd);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, minVgprAllocation);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, maxVgprAllocation);
+  ADD_AMD_SHADER_CORE_PROPERTY(tw, locale, object, vgprAllocationGranularity);
+
+  for (int i = 0; i < tw->columnCount(); ++i) {
+    tw->resizeColumnToContents(i);
+  }
+}
+
 void MainWindow::populateDeviceExtensions(const GpuProperties* pGpuProperties)
 {
   QTreeWidget* tw = findChild<QTreeWidget*>("deviceExtensionsWidget");
@@ -452,7 +534,7 @@ void MainWindow::populateDeviceExtensions(const GpuProperties* pGpuProperties)
 
   tw->clear();
 
-  auto& extension = pGpuProperties->extensions;
+  auto& extension = pGpuProperties->deviceExtensions;
   for (const auto& extension : extension) {
     QTreeWidgetItem* topItem = new QTreeWidgetItem();
     topItem->setText(0, QString::fromUtf8(extension.extensionName));
@@ -695,19 +777,13 @@ void MainWindow::populateFeatures(const GpuProperties* pGpuProperties)
 
   tw->clear();
 
-  VkPhysicalDeviceFeatures2 features2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
-  VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptor_indexing_features
-      = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT };
-  features2.pNext= & descriptor_indexing_features;
-  vkGetPhysicalDeviceFeatures2(gpu, &features2);
-
   // Device limits
   {
     QTreeWidgetItem* parent_item = new QTreeWidgetItem();
     parent_item->setText(0, "Device Features");
     tw->addTopLevelItem(parent_item);
 
-    const VkPhysicalDeviceFeatures& features = features2.features;
+    auto& features = pGpuProperties->deviceFeatures;
     ADD_FEATURE(parent_item, features, robustBufferAccess);
     ADD_FEATURE(parent_item, features, fullDrawIndexUint32);
     ADD_FEATURE(parent_item, features, imageCubeArray);
@@ -767,13 +843,13 @@ void MainWindow::populateFeatures(const GpuProperties* pGpuProperties)
     parent_item->setExpanded(true);
   }
 
-  // Device limits
+  // Descriptor indexing
   {
     QTreeWidgetItem* parent_item = new QTreeWidgetItem();
     parent_item->setText(0, "Descriptor Indexing Features");
     tw->addTopLevelItem(parent_item);
 
-    const VkPhysicalDeviceDescriptorIndexingFeaturesEXT& features = descriptor_indexing_features;
+    auto& features = pGpuProperties->descriptorIndexingFeatures;
     ADD_FEATURE(parent_item, features, shaderInputAttachmentArrayDynamicIndexing);
     ADD_FEATURE(parent_item, features, shaderUniformTexelBufferArrayDynamicIndexing);
     ADD_FEATURE(parent_item, features, shaderStorageTexelBufferArrayDynamicIndexing);
@@ -795,6 +871,18 @@ void MainWindow::populateFeatures(const GpuProperties* pGpuProperties)
     ADD_FEATURE(parent_item, features, descriptorBindingVariableDescriptorCount);
     ADD_FEATURE(parent_item, features, runtimeDescriptorArray);
 
+    parent_item->setExpanded(true);
+  }
+
+  // Descriptor indexing
+  {
+    QTreeWidgetItem* parent_item = new QTreeWidgetItem();
+    parent_item->setText(0, "Variabble Pointer Features");
+    tw->addTopLevelItem(parent_item);
+
+    auto& features = pGpuProperties->variablePointersFeatures;
+    ADD_FEATURE(parent_item, features, variablePointersStorageBuffer);
+    ADD_FEATURE(parent_item, features, variablePointers);
     parent_item->setExpanded(true);
   }
 
@@ -1227,6 +1315,7 @@ void MainWindow::on_gpus_currentIndexChanged(int index)
   mCurrentGpuProperties = static_cast<const GpuProperties*>(pUserData);
 
   populateGeneral(mCurrentGpuProperties);
+  populateAmdShaderCoreProperties(mCurrentGpuProperties);
   populateDeviceExtensions(mCurrentGpuProperties);
   populateLimits(mCurrentGpuProperties);
   populateSparse(mCurrentGpuProperties);
